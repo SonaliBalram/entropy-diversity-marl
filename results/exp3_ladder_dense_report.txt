@@ -1,0 +1,40 @@
+========================================================================
+LADDER COVERAGE
+========================================================================
+  baseline       rungs per seed [25, 25, 25, 25]   best.pt present: 4/4
+  alpha_0.01     rungs per seed [25, 25, 25, 25]   best.pt present: 4/4
+
+========================================================================
+HYSTERESIS FLOOR -- measured inside the control arm alone
+========================================================================
+  descending minus ascending D at matched return
+  per seed: +0.0486  +0.0407  +0.0904  +0.0466
+  matched pairs per seed: [13, 7, 14, 7]
+  mean +0.0566 +/- 0.0228 bits   t(3) = +4.96
+
+  This is the bias that matching on return alone leaves
+  uncontrolled. Compare it with the effect below.
+
+========================================================================
+MATCHED-RETURN DELTA D   [branch = ascending]
+========================================================================
+  seed  42: control  -27.707 / D 1.0431   vs treatment ep    4000  -28.157 / D 1.0407   gap -0.449   dD -0.0024
+  seed 128: control  -28.807 / D 1.0634   vs treatment ep    4000  -27.846 / D 1.0813   gap +0.961   dD +0.0179
+  seed 456: control  -28.869 / D 1.0658   vs treatment ep    4000  -27.642 / D 1.0968   gap +1.226   dD +0.0310
+  seed 789: control  -27.822 / D 1.0856   vs treatment ep    4000  -27.591 / D 1.0901   gap +0.231   dD +0.0045
+
+  Delta D matched = +0.0127 +/- 0.0148 bits   t(3) = +1.72
+  mean |return gap| = 0.717
+  WARNING seeds outside tolerance: [456]
+
+========================================================================
+MATCHED-RETURN DELTA D   [branch = any]
+========================================================================
+  seed  42: control  -27.707 / D 1.0431   vs treatment ep    4000  -28.157 / D 1.0407   gap -0.449   dD -0.0024
+  seed 128: control  -28.807 / D 1.0634   vs treatment ep    4000  -27.846 / D 1.0813   gap +0.961   dD +0.0179
+  seed 456: control  -28.869 / D 1.0658   vs treatment ep    4000  -27.642 / D 1.0968   gap +1.226   dD +0.0310
+  seed 789: control  -27.822 / D 1.0856   vs treatment ep    4000  -27.591 / D 1.0901   gap +0.231   dD +0.0045
+
+  Delta D matched = +0.0127 +/- 0.0148 bits   t(3) = +1.72
+  mean |return gap| = 0.717
+  WARNING seeds outside tolerance: [456]

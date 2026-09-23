@@ -1,0 +1,31 @@
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+----------------------------------------------------------------
+MADDPG + TRAJECTORY DIVERSITY  (Experiment 3, beta = 6)
+----------------------------------------------------------------
+  Seed                    : 2026
+  Episodes                : 3000
+  Batch size              : 256
+  Update every            : 2 env steps
+  Warmup steps            : 5000
+  Gamma / Tau             : 0.95 / 0.005
+  LR actor / critic       : 0.0001 / 0.001
+  Grad clip / Huber delta : 10.0 / 10.0
+  Twin critics / delay    : True / 2
+  Entropy coefficient     : 0.0
+  Diversity coefficient   : 6  (max bonus per episode)
+  Bonus schedule          : terminal
+  D bound                 : log2 min(3, 3) = 1.5850 bits
+  Results dir             : /root/pilot/results/beta_6/seed_2026
+  Planned updates         : 37,500
+----------------------------------------------------------------
+Episode      1 | Reward:   -73.952 | Steps: 25 | Buffer:     25  (warmup: random actions, no learning yet) | cos: +0.152 | D: -0.000 | Avg100:   -73.95
+----------------------------------------------------------------
+Total environment steps : 75,000
+Total gradient updates  : 35,001
+Wall clock              : 0.13 h
+Permutation null (mean over 12 evaluations): 0.0258
+Mean D over last 100 episodes: 0.5367
+Best policy: episode 2654 (Avg100 = -36.402) -> /root/pilot/checkpoints/beta_6/seed_2026/best.pt
+Results -> /root/pilot/results/beta_6/seed_2026
+Model   -> /root/pilot/checkpoints/beta_6/seed_2026/final.pt
+----------------------------------------------------------------

@@ -1,0 +1,116 @@
+------------------------------------------------------------------------
+Seed 42: checkpoints/baseline/seed_42/best.pt
+        stochastic | mean   -27.708 | std   8.547 | min   -57.899 | max   -12.819
+     deterministic | mean   -27.707 | std   8.548 | min   -57.894 | max   -12.823
+      variance decomposition (stochastic):
+        between-layout (environment)  :   73.057   (100.0%)
+        within-layout  (action sample):    0.001   (  0.0%)
+      deterministic-policy behaviour:
+        cosine_mean           :   0.0599
+        cosine_raw_mean       :   0.7935
+        euclidean_mean        :   0.3526
+        correlation_mean      :   0.2209
+        js_mean               :  23.6201
+        w2_mean               :   0.7905
+        mean_sigma            :   0.0068
+      within-layout correlation with reward (10 rollouts x 200 layouts):
+        cosine_mean           :   +0.017  (over 200 layouts)
+        cosine_raw_mean       :   -0.073  (over 200 layouts)
+        correlation_mean      :   -0.014  (over 200 layouts)
+        w2_mean               :   -0.024  (over 200 layouts)
+        mean_sigma            :   +0.258  (over 45 layouts)
+------------------------------------------------------------------------
+Seed 128: checkpoints/baseline/seed_128/best.pt
+        stochastic | mean   -28.808 | std   8.490 | min   -64.194 | max   -12.649
+     deterministic | mean   -28.807 | std   8.488 | min   -64.191 | max   -12.653
+      variance decomposition (stochastic):
+        between-layout (environment)  :   72.083   (100.0%)
+        within-layout  (action sample):    0.001   (  0.0%)
+      deterministic-policy behaviour:
+        cosine_mean           :   0.0830
+        cosine_raw_mean       :   0.7192
+        euclidean_mean        :   0.3141
+        correlation_mean      :   0.1970
+        js_mean               :  24.6229
+        w2_mean               :   0.8287
+        mean_sigma            :   0.0067
+      within-layout correlation with reward (10 rollouts x 200 layouts):
+        cosine_mean           :   -0.047  (over 200 layouts)
+        cosine_raw_mean       :   -0.029  (over 200 layouts)
+        correlation_mean      :   +0.066  (over 200 layouts)
+        w2_mean               :   -0.081  (over 200 layouts)
+        mean_sigma            :   -0.492  (over 1 layouts)
+------------------------------------------------------------------------
+Seed 456: checkpoints/baseline/seed_456/best.pt
+        stochastic | mean   -28.870 | std   8.506 | min   -61.396 | max   -10.507
+     deterministic | mean   -28.869 | std   8.504 | min   -61.382 | max   -10.508
+      variance decomposition (stochastic):
+        between-layout (environment)  :   72.357   (100.0%)
+        within-layout  (action sample):    0.002   (  0.0%)
+      deterministic-policy behaviour:
+        cosine_mean           :   0.0487
+        cosine_raw_mean       :   0.7578
+        euclidean_mean        :   0.3415
+        correlation_mean      :   0.1701
+        js_mean               :  25.4749
+        w2_mean               :   0.9147
+        mean_sigma            :   0.0068
+      within-layout correlation with reward (10 rollouts x 200 layouts):
+        cosine_mean           :   +0.011  (over 200 layouts)
+        cosine_raw_mean       :   +0.067  (over 200 layouts)
+        correlation_mean      :   +0.008  (over 200 layouts)
+        w2_mean               :   -0.091  (over 200 layouts)
+        mean_sigma            :   +0.285  (over 55 layouts)
+------------------------------------------------------------------------
+Seed 789: checkpoints/baseline/seed_789/best.pt
+        stochastic | mean   -27.823 | std   8.757 | min   -53.768 | max   -11.922
+     deterministic | mean   -27.822 | std   8.757 | min   -53.753 | max   -11.950
+      variance decomposition (stochastic):
+        between-layout (environment)  :   76.685   (100.0%)
+        within-layout  (action sample):    0.005   (  0.0%)
+      deterministic-policy behaviour:
+        cosine_mean           :   0.0611
+        cosine_raw_mean       :   0.7251
+        euclidean_mean        :   0.3490
+        correlation_mean      :   0.1930
+        js_mean               :  24.3992
+        w2_mean               :   0.8675
+        mean_sigma            :   0.0067
+      within-layout correlation with reward (10 rollouts x 200 layouts):
+        cosine_mean           :   -0.020  (over 200 layouts)
+        cosine_raw_mean       :   +0.004  (over 200 layouts)
+        correlation_mean      :   -0.030  (over 200 layouts)
+        w2_mean               :   -0.051  (over 200 layouts)
+        mean_sigma            :     +nan  (over 0 layouts)
+========================================================================
+POOLED: 4 seeds x 200 layouts x 10 repeats
+========================================================================
+        stochastic | mean   -28.302 | std   8.593 | min   -64.194 | max   -10.507
+     deterministic | mean   -28.301 | std   8.592 | min   -64.191 | max   -10.508
+
+  Environment-driven variance : 100.0%
+  Sampling-driven variance    :   0.0%
+
+  If sampling dominates, the reported episode-level 'noise'
+  is the policy's intentional stochasticity, not instability.
+  If environment dominates, it is layout difficulty, which is
+  also expected and not a defect. Either way the correct
+  headline number is the per-layout MEAN, not the raw spread.
+
+  Pooled behavioural metrics (stochastic evaluation):
+    cosine_mean           :   0.0577
+    cosine_raw_mean       :   0.7489
+    euclidean_mean        :   0.3395
+    correlation_mean      :   0.1953
+    js_mean               :  24.5293
+    w2_mean               :   0.8503
+    mean_sigma            :   0.0068
+
+  Pooled behavioural metrics (DETERMINISTIC evaluation) -- sigma-invariant, quote these:
+    cosine_mean           :   0.0632
+    cosine_raw_mean       :   0.7489
+    euclidean_mean        :   0.3393
+    correlation_mean      :   0.1953
+    js_mean               :  24.5293
+    w2_mean               :   0.8503
+    mean_sigma            :   0.0068

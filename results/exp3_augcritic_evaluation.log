@@ -1,0 +1,366 @@
+========================================================================
+EXPERIMENT 3 -- HELD-OUT EVALUATION LOG
+========================================================================
+  generated        : 2026-09-10 06:30:25 UTC
+  working directory: /sessions/rcw-01rmhspkctc3snddmloeifnt/mnt/baseline_fixed
+  platform         : Linux-6.8.0-136-generic-aarch64-with-glibc2.35  aarch64
+  python           : 3.10.12
+  torch            : 2.8.0+cpu
+  numpy            : 2.0.2
+  scipy            : 1.13.1
+  gymnasium        : 1.1.1
+  pettingzoo       : 1.26.1
+  mpe2             : 1.1.0
+
+------------------------------------------------------------------------
+CODE FINGERPRINTS  (sha256, first 16 hex)
+------------------------------------------------------------------------
+  Any change to these files changes the numbers below.
+  dd4f2e7b369ab13c  exp3_ladder.py
+  65b048875fd875c1  exp3_outcome.py
+  6dd3f3f5a8507df0  token_diversity.py
+  32485cc491d280eb  environment.py
+  edd298702ee2cd7c  maddpg_system.py
+  f73e99769748f73c  replay_buffer.py
+  48d7850d91a6863f  models/actor.py
+  37e78889258ed309  models/critic.py
+  0032fc31f002c2e4  exp3/train_exp3.py
+
+------------------------------------------------------------------------
+EVALUATION PROTOCOL
+------------------------------------------------------------------------
+  held-out layouts : 200, seeds 900,000,000 .. 900,000,199
+  disjoint from    : training, which uses SEED*1,000,000 + episode
+  policy           : DETERMINISTIC (actor mean, no sampling)
+  measure          : D = H(f_bar) - mean_i H(f_i), bits
+                     tokens = nearest landmark, from obs[4:10]
+                     bound  = log2 min(N,|A|) = 1.5850 bits
+  empirical zero   : permutation null, 25 shuffles per layout
+  statistic        : matched-return Delta D, reported under
+                     branch = ascending (primary, pre-registered)
+                     branch = any        (declared secondary)
+
+------------------------------------------------------------------------
+CHECKPOINT INVENTORY
+------------------------------------------------------------------------
+  beta_3     seed  42:  25 rungs, best.pt written 2026-09-09 12:33
+  beta_3     seed 128:  25 rungs, best.pt written 2026-09-09 13:53
+  beta_3     seed 456:  25 rungs, best.pt written 2026-09-09 15:23
+  beta_3     seed 789:  25 rungs, best.pt written 2026-09-09 17:01
+  beta_3_augcritic seed  42:  25 rungs, best.pt written 2026-09-09 19:19
+  beta_3_augcritic seed 128:  25 rungs, best.pt written 2026-09-09 20:48
+  beta_3_augcritic seed 456:  25 rungs, best.pt written 2026-09-09 22:00
+  beta_3_augcritic seed 789:  25 rungs, best.pt written 2026-09-09 23:55
+
+------------------------------------------------------------------------
+PER-CHECKPOINT EVALUATION  (200 held-out layouts each)
+------------------------------------------------------------------------
+  command: python exp3_ladder.py --fill --arms beta_3 beta_3_augcritic
+  NOTE: arm A2c changes the CRITIC's input space, so per the
+        pre-registered protocol it is compared ONLY to A2 (beta_3),
+        never directly to Experiment 1 or Experiment 2.
+
+cache: 104 / 208 present, 104 to do
+  beta_3_augcritic seed  42 ep   2000  return  -37.945  D 0.8792  sigma 0.0069   [ 5.8s]
+  beta_3_augcritic seed  42 ep   4000  return  -33.693  D 0.9890  sigma 0.0068   [ 5.2s]
+  beta_3_augcritic seed  42 ep   6000  return  -32.668  D 1.0544  sigma 0.0071   [ 5.2s]
+  beta_3_augcritic seed  42 ep   8000  return  -31.532  D 1.0377  sigma 0.0068   [ 5.2s]
+  beta_3_augcritic seed  42 ep  10000  return  -30.310  D 1.0316  sigma 0.0068   [ 5.2s]
+  beta_3_augcritic seed  42 ep  12000  return  -32.845  D 1.0375  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  14000  return  -31.109  D 1.0661  sigma 0.0069   [ 5.2s]
+  beta_3_augcritic seed  42 ep  16000  return  -30.462  D 1.0849  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  18000  return  -31.091  D 1.0611  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  20000  return  -33.886  D 1.0617  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  22000  return  -31.099  D 1.1034  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  24000  return  -31.698  D 1.1089  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  26000  return  -30.081  D 1.0892  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  28000  return  -30.645  D 1.1248  sigma 0.0067   [ 5.3s]
+  beta_3_augcritic seed  42 ep  30000  return  -32.751  D 1.0971  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  32000  return  -32.258  D 1.0893  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  34000  return  -31.289  D 1.0777  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  36000  return  -31.315  D 1.1066  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  38000  return  -33.372  D 1.0898  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  40000  return  -32.323  D 1.1035  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  42000  return  -32.254  D 1.1243  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  44000  return  -33.287  D 1.1114  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  46000  return  -32.342  D 1.1136  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  48000  return  -33.863  D 1.1117  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep  50000  return  -34.697  D 1.1119  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed  42 ep     -1  return  -30.946  D 1.1233  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed 128 ep   2000  return  -37.734  D 0.9667  sigma 0.0069   [ 5.2s]
+  beta_3_augcritic seed 128 ep   4000  return  -33.438  D 1.0126  sigma 0.0069   [ 5.2s]
+  beta_3_augcritic seed 128 ep   6000  return  -32.422  D 1.0158  sigma 0.0071   [ 5.2s]
+  budget reached, stopping cleanly
+filled 29 this session; 75 still outstanding
+cache: 133 / 208 present, 75 to do
+  beta_3_augcritic seed 128 ep   8000  return  -30.402  D 1.0692  sigma 0.0068   [ 6.0s]
+  beta_3_augcritic seed 128 ep  10000  return  -30.418  D 1.0972  sigma 0.0068   [ 5.4s]
+  beta_3_augcritic seed 128 ep  12000  return  -30.967  D 1.0571  sigma 0.0067   [ 5.5s]
+  beta_3_augcritic seed 128 ep  14000  return  -30.413  D 1.0890  sigma 0.0067   [ 5.5s]
+  beta_3_augcritic seed 128 ep  16000  return  -30.012  D 1.0821  sigma 0.0067   [ 5.5s]
+  beta_3_augcritic seed 128 ep  18000  return  -29.754  D 1.0762  sigma 0.0069   [ 5.5s]
+  beta_3_augcritic seed 128 ep  20000  return  -29.449  D 1.0871  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  22000  return  -29.231  D 1.1276  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  24000  return  -29.998  D 1.1189  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  26000  return  -29.398  D 1.1341  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  28000  return  -27.981  D 1.1194  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  30000  return  -28.369  D 1.1369  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  32000  return  -29.193  D 1.1109  sigma 0.0067   [ 5.5s]
+  beta_3_augcritic seed 128 ep  34000  return  -29.392  D 1.1174  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  36000  return  -31.636  D 1.1056  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  38000  return  -31.297  D 1.1087  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  40000  return  -31.877  D 1.0973  sigma 0.0067   [ 5.5s]
+  beta_3_augcritic seed 128 ep  42000  return  -31.030  D 1.0754  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  44000  return  -32.252  D 1.0864  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  46000  return  -32.628  D 1.0905  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  48000  return  -32.876  D 1.0654  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep  50000  return  -34.138  D 1.0464  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 128 ep     -1  return  -27.213  D 1.1288  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 456 ep   2000  return  -37.445  D 0.9295  sigma 0.0082   [ 5.4s]
+  beta_3_augcritic seed 456 ep   4000  return  -34.001  D 1.0488  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 456 ep   6000  return  -32.275  D 1.0534  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 456 ep   8000  return  -31.415  D 1.0222  sigma 0.0068   [ 5.4s]
+  beta_3_augcritic seed 456 ep  10000  return  -30.260  D 1.0259  sigma 0.0069   [ 5.4s]
+  beta_3_augcritic seed 456 ep  12000  return  -28.536  D 1.0787  sigma 0.0068   [ 5.4s]
+  budget reached, stopping cleanly
+filled 29 this session; 46 still outstanding
+cache: 162 / 208 present, 46 to do
+  beta_3_augcritic seed 456 ep  14000  return  -28.412  D 1.1033  sigma 0.0069   [ 6.0s]
+  beta_3_augcritic seed 456 ep  16000  return  -28.966  D 1.0863  sigma 0.0068   [ 5.4s]
+  beta_3_augcritic seed 456 ep  18000  return  -28.812  D 1.1087  sigma 0.0068   [ 5.4s]
+  beta_3_augcritic seed 456 ep  20000  return  -28.627  D 1.1223  sigma 0.0069   [ 5.4s]
+  beta_3_augcritic seed 456 ep  22000  return  -27.924  D 1.1078  sigma 0.0068   [ 5.4s]
+  beta_3_augcritic seed 456 ep  24000  return  -28.096  D 1.1573  sigma 0.0068   [ 5.4s]
+  beta_3_augcritic seed 456 ep  26000  return  -28.238  D 1.1372  sigma 0.0070   [ 5.4s]
+  beta_3_augcritic seed 456 ep  28000  return  -31.927  D 1.1361  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 456 ep  30000  return  -29.713  D 1.1194  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 456 ep  32000  return  -29.703  D 1.1225  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 456 ep  34000  return  -30.698  D 1.1009  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 456 ep  36000  return  -29.790  D 1.0900  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 456 ep  38000  return  -33.039  D 1.0715  sigma 0.0069   [ 5.4s]
+  beta_3_augcritic seed 456 ep  40000  return  -33.967  D 1.0641  sigma 0.0068   [ 5.4s]
+  beta_3_augcritic seed 456 ep  42000  return  -33.416  D 1.0194  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 456 ep  44000  return  -33.538  D 1.0510  sigma 0.0068   [ 5.4s]
+  beta_3_augcritic seed 456 ep  46000  return  -33.514  D 1.0531  sigma 0.0068   [ 5.4s]
+  beta_3_augcritic seed 456 ep  48000  return  -33.387  D 1.0833  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 456 ep  50000  return  -34.253  D 1.0784  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 456 ep     -1  return  -27.588  D 1.1264  sigma 0.0067   [ 5.5s]
+  beta_3_augcritic seed 789 ep   2000  return  -37.304  D 0.9408  sigma 0.0068   [ 5.4s]
+  beta_3_augcritic seed 789 ep   4000  return  -32.979  D 0.9978  sigma 0.0070   [ 5.4s]
+  beta_3_augcritic seed 789 ep   6000  return  -32.146  D 1.0166  sigma 0.0068   [ 5.4s]
+  beta_3_augcritic seed 789 ep   8000  return  -31.493  D 1.0027  sigma 0.0070   [ 5.4s]
+  beta_3_augcritic seed 789 ep  10000  return  -28.915  D 1.0806  sigma 0.0070   [ 5.4s]
+  beta_3_augcritic seed 789 ep  12000  return  -28.025  D 1.1122  sigma 0.0068   [ 5.4s]
+  beta_3_augcritic seed 789 ep  14000  return  -27.885  D 1.1066  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 789 ep  16000  return  -30.087  D 1.1070  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 789 ep  18000  return  -29.547  D 1.1304  sigma 0.0067   [ 5.4s]
+  budget reached, stopping cleanly
+filled 29 this session; 17 still outstanding
+cache: 191 / 208 present, 17 to do
+  beta_3_augcritic seed 789 ep  20000  return  -28.599  D 1.0890  sigma 0.0068   [ 5.6s]
+  beta_3_augcritic seed 789 ep  22000  return  -28.516  D 1.1596  sigma 0.0067   [ 5.1s]
+  beta_3_augcritic seed 789 ep  24000  return  -28.750  D 1.1244  sigma 0.0067   [ 5.1s]
+  beta_3_augcritic seed 789 ep  26000  return  -27.509  D 1.1611  sigma 0.0067   [ 5.1s]
+  beta_3_augcritic seed 789 ep  28000  return  -26.824  D 1.1413  sigma 0.0067   [ 5.0s]
+  beta_3_augcritic seed 789 ep  30000  return  -26.868  D 1.1788  sigma 0.0067   [ 5.1s]
+  beta_3_augcritic seed 789 ep  32000  return  -26.762  D 1.1463  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed 789 ep  34000  return  -27.200  D 1.1640  sigma 0.0067   [ 5.2s]
+  beta_3_augcritic seed 789 ep  36000  return  -27.236  D 1.1497  sigma 0.0067   [ 5.4s]
+  beta_3_augcritic seed 789 ep  38000  return  -27.350  D 1.1521  sigma 0.0067   [ 5.1s]
+  beta_3_augcritic seed 789 ep  40000  return  -28.185  D 1.1562  sigma 0.0067   [ 5.8s]
+  beta_3_augcritic seed 789 ep  42000  return  -27.367  D 1.1712  sigma 0.0067   [ 6.0s]
+  beta_3_augcritic seed 789 ep  44000  return  -28.525  D 1.1344  sigma 0.0067   [ 5.3s]
+  beta_3_augcritic seed 789 ep  46000  return  -27.487  D 1.1704  sigma 0.0067   [ 5.9s]
+  beta_3_augcritic seed 789 ep  48000  return  -29.097  D 1.1485  sigma 0.0067   [ 5.5s]
+  beta_3_augcritic seed 789 ep  50000  return  -29.225  D 1.1293  sigma 0.0067   [ 5.5s]
+  beta_3_augcritic seed 789 ep     -1  return  -25.968  D 1.1470  sigma 0.0067   [ 5.4s]
+filled 17 this session; 0 still outstanding
+
+------------------------------------------------------------------------
+ANALYSIS
+------------------------------------------------------------------------
+  command: python exp3_ladder.py --report --control beta_3 --treatment beta_3_augcritic
+
+========================================================================
+LADDER COVERAGE
+========================================================================
+  beta_3         rungs per seed [25, 25, 25, 25]   best.pt present: 4/4
+  beta_3_augcritic rungs per seed [25, 25, 25, 25]   best.pt present: 4/4
+
+========================================================================
+HYSTERESIS FLOOR -- measured inside the control arm alone
+========================================================================
+  descending minus ascending D at matched return
+  per seed: +0.0448  +0.0595  +0.0442  +0.0323
+  matched pairs per seed: [10, 5, 9, 6]
+  mean +0.0452 +/- 0.0111 bits   t(3) = +8.12
+
+  This is the bias that matching on return alone leaves
+  uncontrolled. Compare it with the effect below.
+
+========================================================================
+MATCHED-RETURN DELTA D   [branch = ascending]
+========================================================================
+  seed  42: control  -28.767 / D 1.0957   vs treatment ep   26000  -30.081 / D 1.0892   gap -1.314   dD -0.0065
+  seed 128: control  -29.878 / D 1.0299   vs treatment ep   24000  -29.998 / D 1.1189   gap -0.120   dD +0.0890
+  seed 456: control  -27.642 / D 1.1119   vs treatment ep      -1  -27.588 / D 1.1264   gap +0.054   dD +0.0145
+  seed 789: control  -29.427 / D 1.0695   vs treatment ep   18000  -29.547 / D 1.1304   gap -0.120   dD +0.0609
+
+  Delta D matched = +0.0395 +/- 0.0434 bits   t(3) = +1.82
+  mean |return gap| = 0.402
+  WARNING seeds outside tolerance: [42]
+
+========================================================================
+MATCHED-RETURN DELTA D   [branch = any]
+========================================================================
+  seed  42: control  -28.767 / D 1.0957   vs treatment ep   26000  -30.081 / D 1.0892   gap -1.314   dD -0.0065
+  seed 128: control  -29.878 / D 1.0299   vs treatment ep   24000  -29.998 / D 1.1189   gap -0.120   dD +0.0890
+  seed 456: control  -27.642 / D 1.1119   vs treatment ep      -1  -27.588 / D 1.1264   gap +0.054   dD +0.0145
+  seed 789: control  -29.427 / D 1.0695   vs treatment ep   18000  -29.547 / D 1.1304   gap -0.120   dD +0.0609
+
+  Delta D matched = +0.0395 +/- 0.0434 bits   t(3) = +1.82
+  mean |return gap| = 0.402
+  WARNING seeds outside tolerance: [42]
+
+------------------------------------------------------------------------
+PRE-REGISTERED COMPANION CHECKS  (A2c vs A2)
+------------------------------------------------------------------------
+
+1. THE CAPACITY CHECK -- the substitute for the (beta=0, augmented) control
+   Registered reading: if A2c's UNSHAPED return exceeds A2's by a margin
+   comparable to its Delta D gain, the gain is general critic capacity,
+   NOT a bonus-specific Markov repair.
+   seed  42: A2  -28.767   A2c  -30.946   diff  -2.179
+   seed 128: A2  -29.878   A2c  -27.213   diff  +2.665
+   seed 456: A2  -27.642   A2c  -27.588   diff  +0.054
+   seed 789: A2  -29.427   A2c  -25.968   diff  +3.458
+   mean +1.000 +/- 2.570 reward units   t(3) = +0.78
+
+2. MECHANISM SIGNATURE -- twin-critic disagreement during training
+   The augmentation makes the terminal bonus predictable, so disagreement
+   should FALL if the Markov repair is doing what it claims.
+   A2  last quarter: 1.520  1.141  1.480  1.192   mean 1.334
+   A2c last quarter: 2.241  2.725  2.437  1.818   mean 2.305
+
+3. GAMING TRIPWIRE -- sigma vs 0.02 (floor 0.0067)
+   A2  max sigma over all checkpoints: 0.0076   PASS
+   A2c max sigma over all checkpoints: 0.0082   PASS
+
+4. PERMUTATION NULL (Miller-Madow predicts 0.0385)
+   beta_3            : 0.0389 bits
+   beta_3_augcritic  : 0.0391 bits
+
+5. FOR REFERENCE -- A2c against the ORIGINAL baseline (NOT a licensed
+   comparison; A2c changes the critic input space. Shown only to place it.)
+   unshaped return vs baseline best.pt: +0.373 +/- 2.418   t(3) = +0.31
+
+========================================================================
+A2 vs A2c -- THOROUGH COMPARISON
+========================================================================
+  Both arms: beta = 3, alpha = 0, terminal schedule, 50,000
+  episodes, batch 256, --update-every 2, seeds 42/128/456/789.
+  Sole difference: A2c's centralised critic additionally sees
+  the 3x3 running token-count matrix n_i(x)/T (69 -> 78 inputs).
+  Same seed => same actor initialisation and same episode layouts.
+
+------------------------------------------------------------------------
+A. TRAINING DYNAMICS  (from the 50,000-episode training curves)
+------------------------------------------------------------------------
+  quantity                                A2       A2c             A2c - A2 (paired)
+  peak smoothed return              -28.4758  -27.0672   +1.4086 +/- 2.1050  t= +1.34  
+  episode of peak                      14966     26731  +11765.5000 +/- 5044.7785  t= +4.66  
+  final return (last 2k)            -35.6765  -31.9784   +3.6981 +/- 2.6208  t= +2.82  
+  degradation, peak to end           -7.2985   -5.4212   +1.8773 +/- 3.2950  t= +1.14  
+
+------------------------------------------------------------------------
+B. CRITIC HEALTH  (the augmentation's own diagnostics)
+------------------------------------------------------------------------
+  quantity                                A2       A2c             A2c - A2 (paired)
+  twin-critic disagreement (last 25%)    1.3336    2.3052   +0.9716 +/- 0.4312  t= +4.51  
+  critic loss (last 25%)              2.5937    7.3146   +4.7209 +/- 2.3626  t= +4.00  
+  actor loss (last 25%)              33.9427   21.1068  -12.8359 +/- 8.7787  t= -2.92  
+  mean Q (last 25%)                 -33.9427  -21.1068  +12.8359 +/- 8.7787  t= +2.92  
+  Q vs G pessimism ratio              1.6355    1.0940   -0.5414 +/- 0.4191  t= -2.58  
+
+  Disagreement by training quarter (mean over seeds):
+    A2   Q1  0.678  Q2  0.984  Q3  1.226  Q4  1.334
+    A2c  Q1  1.329  Q2  1.987  Q3  1.980  Q4  2.305
+
+------------------------------------------------------------------------
+C. DIVERSITY DURING TRAINING  (D_norm on the training rollouts)
+------------------------------------------------------------------------
+  quantity                                A2       A2c             A2c - A2 (paired)
+  D_norm, last 1,000 episodes         0.6302    0.6853   +0.0551 +/- 0.0323  t= +3.41  
+  peak smoothed D_norm                0.6956    0.7282   +0.0326 +/- 0.0236  t= +2.77  
+
+------------------------------------------------------------------------
+D. DIVERSITY, HELD OUT  (200 fixed layouts, deterministic policy)
+------------------------------------------------------------------------
+  quantity                                A2       A2c             A2c - A2 (paired)
+  D at own best.pt (bits)             1.0768    1.1314   +0.0546 +/- 0.0401  t= +2.72  
+  return at own best.pt             -28.9284  -27.9286   +0.9998 +/- 2.5701  t= +0.78  
+  max D anywhere on ladder            1.0976    1.1494   +0.0519 +/- 0.0202  t= +5.14  
+  max return on ladder              -28.9021  -28.1869   +0.7152 +/- 1.9494  t= +0.73  
+
+  Hysteresis (descending minus ascending D at matched return), per arm:
+    A2   +0.0452 +/- 0.0111 bits (n=4 seeds)
+    A2c  +0.0374 +/- 0.0168 bits (n=4 seeds)
+
+------------------------------------------------------------------------
+E. BEHAVIOURAL METRICS  (independent measure family, sigma-invariant)
+------------------------------------------------------------------------
+  quantity                                A2       A2c             A2c - A2 (paired)
+  pairwise cosine distance            0.0788    0.0479   -0.0310 +/- 0.0185  t= -3.35  
+  pairwise euclidean distance         0.3843    0.3012   -0.0831 +/- 0.0207  t= -8.02  
+  temporal correlation                0.1947    0.2660   +0.0713 +/- 0.0336  t= +4.25  
+  squashed W2                         0.9596    1.4409   +0.4813 +/- 0.1072  t= +8.98  
+  degenerate fraction                 0.0000    0.0055   +0.0055 +/- 0.0019  t= +5.65  
+
+------------------------------------------------------------------------
+F. STABILITY ACROSS SEEDS  (spread, not a paired test)
+------------------------------------------------------------------------
+  quantity                                A2       A2c             A2c - A2 (paired)
+  quantity                             A2 sd    A2c sd
+  peak return                         0.8911    1.8476
+  final return                        2.3572    1.8312
+  return at best.pt                   0.9715    2.1271
+  D at best.pt                        0.0358    0.0107
+
+========================================================================
+BEHAVIOURAL METRICS AT MATCHED COMPETENCE  (A2 vs A2c)
+========================================================================
+  Smoothing 1000 episodes; ascending branch only; a target counts
+  for a seed only if BOTH arms match it within 0.25 reward units.
+  Higher cosine / euclidean = MORE diversity.
+  Higher correlation = LESS diversity.
+
+    target  n      cosine    euclid      corr    D_norm     sigma
+  ---------------------------------------------------------------
+     -37.0  4     +0.0044   +0.0099   +0.0149   +0.0278   -0.0000
+     -36.5  4     +0.0071   +0.0105   +0.0162   +0.0276   -0.0000
+     -36.0  4     +0.0162   +0.0182   +0.0074   +0.0251   -0.0001
+     -35.5  4     +0.0189   +0.0250   -0.0058   +0.0285   -0.0001
+     -35.0  4     +0.0227   +0.0216   -0.0047   +0.0246   -0.0000
+     -34.5  4     +0.0242   +0.0163   +0.0079   +0.0207   -0.0000
+     -34.0  4     +0.0256   +0.0161   -0.0208   +0.0220   +0.0001
+     -33.5  4     +0.0167   +0.0111   -0.0206   +0.0190   +0.0002
+     -33.0  4     +0.0119   +0.0086   -0.0127   +0.0162   +0.0002
+     -32.5  4     +0.0002   +0.0319   -0.0281   +0.0290   +0.0002
+     -32.0  4     +0.0053   +0.0543   -0.0303   +0.0228   +0.0001
+     -31.5  4     -0.0077   +0.0555   -0.0092   +0.0102   +0.0001
+     -31.0  4     -0.0116   +0.0658   -0.0069   +0.0262   -0.0001
+     -30.5  4     -0.0353   +0.0478   +0.0209   +0.0092   +0.0001
+     -30.0  4     -0.0418   +0.0525   +0.0186   +0.0379   +0.0001
+
+  POOLED over all matched (seed, target) points -- A2c minus A2:
+  --------------------------------------------------------------------
+  pairwise cosine distance      +0.0038 +/- 0.0303  (n= 60 points)   higher = more diverse
+  pairwise euclidean distance   +0.0297 +/- 0.0329  (n= 60 points)   higher = more diverse
+  temporal correlation          -0.0035 +/- 0.0392  (n= 60 points)   higher = LESS diverse
+  token D_norm                  +0.0231 +/- 0.0174  (n= 60 points)   higher = more diverse
+  policy sigma                  +0.0000 +/- 0.0002  (n= 60 points)   confound check
+
+  NOTE: the pooled points are autocorrelated -- adjacent targets
+  are nearby episodes of the same run -- so the spread is a
+  descriptive range, not a standard error, and no t is quoted.
+

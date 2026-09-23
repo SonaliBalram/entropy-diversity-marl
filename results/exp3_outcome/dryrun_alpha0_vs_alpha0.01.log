@@ -1,0 +1,214 @@
+========================================================================
+CONTROL  alpha0   (checkpoints/baseline)
+========================================================================
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep   2000  return  -35.580   D 0.9306 bits   null 0.0368   sigma 0.0070
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep   4000  return  -30.153   D 1.0430 bits   null 0.0385   sigma 0.0068
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep   6000  return  -29.713   D 1.0202 bits   null 0.0385   sigma 0.0068
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep   8000  return  -30.050   D 1.0757 bits   null 0.0392   sigma 0.0068
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep  12000  return  -27.691   D 1.0700 bits   null 0.0382   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep  20000  return  -28.343   D 1.0817 bits   null 0.0390   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep  30000  return  -31.966   D 1.0495 bits   null 0.0404   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep  40000  return  -34.704   D 1.0351 bits   null 0.0390   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep  50000  return  -35.394   D 0.9815 bits   null 0.0399   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42     best.pt  return  -27.707   D 1.0431 bits   sigma 0.0068
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep   2000  return  -36.973   D 0.8863 bits   null 0.0367   sigma 0.0071
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep   4000  return  -32.703   D 0.9675 bits   null 0.0371   sigma 0.0068
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep   6000  return  -31.708   D 0.9713 bits   null 0.0385   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep   8000  return  -31.463   D 1.0097 bits   null 0.0383   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep  12000  return  -29.723   D 1.0235 bits   null 0.0391   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep  20000  return  -29.899   D 1.0535 bits   null 0.0395   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep  30000  return  -33.112   D 1.0294 bits   null 0.0384   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep  40000  return  -35.787   D 0.9789 bits   null 0.0384   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep  50000  return  -35.233   D 0.9901 bits   null 0.0381   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128     best.pt  return  -28.807   D 1.0634 bits   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep   2000  return  -34.055   D 0.9133 bits   null 0.0395   sigma 0.0068
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep   4000  return  -32.322   D 0.9436 bits   null 0.0392   sigma 0.0068
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep   6000  return  -30.728   D 1.0265 bits   null 0.0402   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep   8000  return  -29.858   D 1.0347 bits   null 0.0387   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep  12000  return  -29.486   D 1.0766 bits   null 0.0394   sigma 0.0068
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep  20000  return  -30.891   D 1.0916 bits   null 0.0396   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep  30000  return  -35.350   D 1.0269 bits   null 0.0399   sigma 0.0070
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep  40000  return  -35.261   D 1.0218 bits   null 0.0394   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep  50000  return  -34.035   D 1.0282 bits   null 0.0391   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456     best.pt  return  -28.869   D 1.0658 bits   sigma 0.0068
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep   2000  return  -36.535   D 0.9319 bits   null 0.0393   sigma 0.0068
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep   4000  return  -30.022   D 1.0182 bits   null 0.0396   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep   6000  return  -29.581   D 1.0590 bits   null 0.0400   sigma 0.0068
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep   8000  return  -29.009   D 1.0784 bits   null 0.0405   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep  12000  return  -27.300   D 1.0677 bits   null 0.0407   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep  20000  return  -29.997   D 1.1092 bits   null 0.0391   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep  30000  return  -31.978   D 1.0194 bits   null 0.0385   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep  40000  return  -32.921   D 1.0468 bits   null 0.0388   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep  50000  return  -34.504   D 1.0323 bits   null 0.0383   sigma 0.0067
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789     best.pt  return  -27.822   D 1.0856 bits   sigma 0.0067
+
+========================================================================
+TREATMENT  alpha0.01   (checkpoints/alpha_0.01)
+========================================================================
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep   2000  return  -31.870   D 1.0221 bits   null 0.0379   sigma 0.7332
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep   4000  return  -28.157   D 1.0407 bits   null 0.0384   sigma 0.7664
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep   6000  return  -25.758   D 1.0963 bits   null 0.0391   sigma 0.7658
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep   8000  return  -24.892   D 1.1253 bits   null 0.0397   sigma 0.7632
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep  10000  return  -22.798   D 1.1547 bits   null 0.0390   sigma 0.7192
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep  12000  return  -22.433   D 1.1635 bits   null 0.0388   sigma 0.7292
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep  20000  return  -21.218   D 1.2013 bits   null 0.0393   sigma 0.7177
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep  30000  return  -20.082   D 1.2195 bits   null 0.0393   sigma 0.6891
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep  40000  return  -19.561   D 1.2112 bits   null 0.0394   sigma 0.6837
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42  ep  50000  return  -18.464   D 1.2336 bits   null 0.0396   sigma 0.6888
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed  42     best.pt  return  -18.895   D 1.2118 bits   sigma 0.6515
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep   2000  return  -31.943   D 1.0145 bits   null 0.0383   sigma 0.7594
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep   4000  return  -27.846   D 1.0813 bits   null 0.0393   sigma 0.7803
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep   6000  return  -25.208   D 1.1096 bits   null 0.0390   sigma 0.7917
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep   8000  return  -24.083   D 1.1441 bits   null 0.0393   sigma 0.7242
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep  10000  return  -22.445   D 1.1884 bits   null 0.0396   sigma 0.7127
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep  12000  return  -22.207   D 1.1903 bits   null 0.0394   sigma 0.6943
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep  20000  return  -20.742   D 1.2098 bits   null 0.0397   sigma 0.6893
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep  30000  return  -19.071   D 1.2198 bits   null 0.0399   sigma 0.6936
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep  40000  return  -18.022   D 1.2302 bits   null 0.0397   sigma 0.6482
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128  ep  50000  return  -17.173   D 1.2362 bits   null 0.0395   sigma 0.6304
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 128     best.pt  return  -17.399   D 1.2346 bits   sigma 0.6520
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep   2000  return  -31.177   D 1.0501 bits   null 0.0390   sigma 0.7317
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep   4000  return  -27.642   D 1.0968 bits   null 0.0400   sigma 0.8113
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep   6000  return  -24.875   D 1.1394 bits   null 0.0399   sigma 0.7717
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep   8000  return  -22.872   D 1.1624 bits   null 0.0401   sigma 0.7486
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep  10000  return  -22.312   D 1.1818 bits   null 0.0395   sigma 0.7211
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep  12000  return  -21.813   D 1.1878 bits   null 0.0400   sigma 0.6926
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep  20000  return  -19.926   D 1.2075 bits   null 0.0402   sigma 0.6793
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep  30000  return  -18.294   D 1.2233 bits   null 0.0407   sigma 0.6677
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep  40000  return  -17.949   D 1.2254 bits   null 0.0404   sigma 0.6673
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456  ep  50000  return  -17.607   D 1.2275 bits   null 0.0404   sigma 0.6626
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 456     best.pt  return  -17.377   D 1.2351 bits   sigma 0.6670
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep   2000  return  -30.828   D 1.0156 bits   null 0.0383   sigma 0.7348
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep   4000  return  -27.591   D 1.0901 bits   null 0.0396   sigma 0.8079
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep   6000  return  -26.217   D 1.1139 bits   null 0.0402   sigma 0.7579
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep   8000  return  -23.350   D 1.1636 bits   null 0.0406   sigma 0.7104
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep  10000  return  -22.916   D 1.1640 bits   null 0.0404   sigma 0.7552
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep  12000  return  -22.565   D 1.1792 bits   null 0.0404   sigma 0.6860
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep  20000  return  -21.643   D 1.2033 bits   null 0.0406   sigma 0.7025
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep  30000  return  -19.840   D 1.2137 bits   null 0.0400   sigma 0.7283
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep  40000  return  -18.843   D 1.2255 bits   null 0.0405   sigma 0.6680
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789  ep  50000  return  -18.424   D 1.2283 bits   null 0.0403   sigma 0.6866
+error: XDG_RUNTIME_DIR is invalid or not set in the environment.
+  seed 789     best.pt  return  -18.673   D 1.2278 bits   sigma 0.6945
+
+========================================================================
+PRIMARY OUTCOME -- matched-return Delta D
+========================================================================
+  Control reporting checkpoint: best.pt. Treatment matched to it on held-out return, tolerance 1.0 reward units.
+
+  seed  42: control  -27.707 / D 1.0431   vs treatment ep    4000  -28.157 / D 1.0407   | return gap -0.449 OK  | dD -0.0024
+  seed 128: control  -28.807 / D 1.0634   vs treatment ep    4000  -27.846 / D 1.0813   | return gap +0.961 OK  | dD +0.0179
+  seed 456: control  -28.869 / D 1.0658   vs treatment ep    4000  -27.642 / D 1.0968   | return gap +1.226 OUT OF TOLERANCE  | dD +0.0310
+  seed 789: control  -27.822 / D 1.0856   vs treatment ep    4000  -27.591 / D 1.0901   | return gap +0.231 OK  | dD +0.0045
+
+  Delta D matched = +0.0127 +/- 0.0148 bits   t(3) = +1.72   mean |return gap| = 0.717
+  WARNING: seeds [456] had no checkpoint within 1.0 of the control return. The treatment arm may not span the control's performance; report this rather than widening the tolerance silently.
+
+========================================================================
+SECONDARY -- residual after predicting D from return
+========================================================================
+  within-policy slope,       alpha0: +0.01504 bits/reward unit   (r = +0.442)
+  within-policy slope,    alpha0.01: +0.02483 bits/reward unit   (r = +0.653)
+
+  raw Delta D at each arm's own best.pt: +0.1628 bits (with a return difference of +10.21)
+    slope from   control (+0.01504): residual +0.0092 +/- 0.0183  t = +1.01
+    slope from    pooled (+0.01993): residual -0.0408 +/- 0.0241  t = -3.38
+    slope from treatment (+0.02483): residual -0.0908 +/- 0.0305  t = -5.96
+    NOTE: the residual changes sign across slope choices, so it is not evidence either way. The matched-return statistic above is the one to report.
+
+========================================================================
+GAMING MONITOR -- sigma along the treatment ladder
+========================================================================
+  NOTE: this treatment arm trains at alpha = 0.01, so a large sigma is the INTENDED effect of policy-entropy regularisation, not gaming. The tripwire below is only a failure signal for an arm run at alpha = 0.
+
+  seed  42: sigma 0.6837 -> 0.7664 over episodes 2000..50000
+  seed 128: sigma 0.6304 -> 0.7917 over episodes 2000..50000
+  seed 456: sigma 0.6626 -> 0.8113 over episodes 2000..50000
+  seed 789: sigma 0.6680 -> 0.8079 over episodes 2000..50000
+
+  Tripwire exceeded on seeds [42, 128, 456, 789], as expected at alpha = 0.01. Not a gaming signal for this arm.
+
+Saved -> results/exp3_outcome/outcome.npz

@@ -1,0 +1,36 @@
+D bound = log2(min(N,|A|)) = 1.5850 bits
+
+========================================================================
+alpha0   (checkpoints/baseline/seed_*/best.pt)
+========================================================================
+  seed  42  det D 1.0431 bits (0.658 norm, null 0.025)   stoch D 1.0430 (0.658 norm, null 0.025)   return  -27.707
+  seed 128  det D 1.0634 bits (0.671 norm, null 0.025)   stoch D 1.0634 (0.671 norm, null 0.025)   return  -28.807
+  seed 456  det D 1.0658 bits (0.672 norm, null 0.025)   stoch D 1.0659 (0.673 norm, null 0.025)   return  -28.869
+  seed 789  det D 1.0856 bits (0.685 norm, null 0.025)   stoch D 1.0855 (0.685 norm, null 0.025)   return  -27.822
+  four-seed mean  det D = 1.0645 +/- 0.0174 bits   null = 0.0394   excess = +1.0251
+
+========================================================================
+alpha0.01_ep10k   (checkpoints/alpha_0.01/seed_*/ckpt_ep10000.pt)
+========================================================================
+  seed  42  det D 1.1547 bits (0.729 norm, null 0.025)   stoch D 1.1503 (0.726 norm, null 0.025)   return  -22.798
+  seed 128  det D 1.1884 bits (0.750 norm, null 0.025)   stoch D 1.1824 (0.746 norm, null 0.025)   return  -22.445
+  seed 456  det D 1.1818 bits (0.746 norm, null 0.025)   stoch D 1.1783 (0.743 norm, null 0.025)   return  -22.312
+  seed 789  det D 1.1640 bits (0.734 norm, null 0.025)   stoch D 1.1634 (0.734 norm, null 0.025)   return  -22.916
+  four-seed mean  det D = 1.1723 +/- 0.0156 bits   null = 0.0396   excess = +1.1327
+
+========================================================================
+alpha0.01_best   (checkpoints/alpha_0.01/seed_*/best.pt)
+========================================================================
+  seed  42  det D 1.2118 bits (0.765 norm, null 0.025)   stoch D 1.2121 (0.765 norm, null 0.025)   return  -18.895
+  seed 128  det D 1.2346 bits (0.779 norm, null 0.025)   stoch D 1.2356 (0.780 norm, null 0.025)   return  -17.399
+  seed 456  det D 1.2351 bits (0.779 norm, null 0.025)   stoch D 1.2328 (0.778 norm, null 0.025)   return  -17.377
+  seed 789  det D 1.2278 bits (0.775 norm, null 0.025)   stoch D 1.2275 (0.774 norm, null 0.025)   return  -18.673
+  four-seed mean  det D = 1.2273 +/- 0.0109 bits   null = 0.0400   excess = +1.1874
+
+========================================================================
+PAIRED ACROSS SEEDS, vs alpha0   (n = 4, df = 3)
+========================================================================
+         alpha0.01_ep10k  det: dD = +0.1078 bits +/- 0.0203   t(3) = +10.61
+         alpha0.01_ep10k  sto: dD = +0.1042 bits +/- 0.0181   t(3) = +11.49
+          alpha0.01_best  det: dD = +0.1628 bits +/- 0.0138   t(3) = +23.61
+          alpha0.01_best  sto: dD = +0.1625 bits +/- 0.0138   t(3) = +23.48

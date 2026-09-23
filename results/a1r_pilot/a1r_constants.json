@@ -1,0 +1,35 @@
+{
+  "alpha": 0.01,
+  "kappa": 0.3495471116911447,
+  "log_z": -1.531728452881031,
+  "mode": "both",
+  "clamp_ratio": 10.0,
+  "decades": 1.0,
+  "interdecile_G": 1.077743534247583,
+  "frac_owns_nothing": 0.14278333333333335,
+  "tau_baseline_slope": 0.028201799098869773,
+  "reference": {
+    "ckpt_root": "checkpoints/alpha_0.01",
+    "seeds": [
+      42,
+      128,
+      456,
+      789
+    ],
+    "rungs": [
+      2000,
+      10000,
+      20000,
+      30000,
+      40000,
+      50000
+    ],
+    "layouts": 200,
+    "layout_offset": 900000000,
+    "deterministic": false,
+    "n_samples": 360000,
+    "a1_mean_sigma": 0.6429299712181091
+  },
+  "verdict": "RUN A1r AS DESIGNED",
+  "created": "2026-09-22T21:07:33"
+}

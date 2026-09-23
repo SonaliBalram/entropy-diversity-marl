@@ -1,0 +1,144 @@
+========================================================================
+A1r PILOT -- reference set, frozen constants, kill switch
+========================================================================
+reference arm   checkpoints/alpha_0.01
+seeds           [42, 128, 456, 789]
+rungs           [2000, 10000, 20000, 30000, 40000, 50000]
+layouts         200 held-out (900000000+i)
+pass            stochastic
+
+  seed  42  ep2000      15000 samples   sigma 0.7054   return  -31.900
+  seed  42  ep10000     15000 samples   sigma 0.6906   return  -22.892
+  seed  42  ep20000     15000 samples   sigma 0.6679   return  -21.335
+  seed  42  ep30000     15000 samples   sigma 0.6435   return  -20.059
+  seed  42  ep40000     15000 samples   sigma 0.6278   return  -19.524
+  seed  42  ep50000     15000 samples   sigma 0.6490   return  -18.346
+  seed 128  ep2000      15000 samples   sigma 0.7309   return  -32.041
+  seed 128  ep10000     15000 samples   sigma 0.6781   return  -22.542
+  seed 128  ep20000     15000 samples   sigma 0.6409   return  -20.822
+  seed 128  ep30000     15000 samples   sigma 0.6276   return  -19.137
+  seed 128  ep40000     15000 samples   sigma 0.5700   return  -18.057
+  seed 128  ep50000     15000 samples   sigma 0.5332   return  -17.243
+  seed 456  ep2000      15000 samples   sigma 0.7095   return  -31.180
+  seed 456  ep10000     15000 samples   sigma 0.6752   return  -22.355
+  seed 456  ep20000     15000 samples   sigma 0.6133   return  -19.751
+  seed 456  ep30000     15000 samples   sigma 0.5917   return  -18.199
+  seed 456  ep40000     15000 samples   sigma 0.5754   return  -18.037
+  seed 456  ep50000     15000 samples   sigma 0.5705   return  -17.519
+  seed 789  ep2000      15000 samples   sigma 0.7102   return  -30.802
+  seed 789  ep10000     15000 samples   sigma 0.7152   return  -22.895
+  seed 789  ep20000     15000 samples   sigma 0.6517   return  -21.653
+  seed 789  ep30000     15000 samples   sigma 0.6585   return  -19.744
+  seed 789  ep40000     15000 samples   sigma 0.5861   return  -18.863
+  seed 789  ep50000     15000 samples   sigma 0.6081   return  -18.622
+
+reference set: 360000 (state, agent) samples
+
+------------------------------------------------------------------------
+GAP DISTRIBUTION (reward units)
+------------------------------------------------------------------------
+                            q10      q25   median      q75      q90     mean
+landmark margin m        0.0861   0.2225   0.4759   0.7882   1.1119   0.5433
+ownership gap  g        -1.0866  -0.7984  -0.4681  -0.1661   0.0956  -0.4819
+combined gap   G        -0.9822  -0.6790  -0.3339  -0.0856   0.0956  -0.3898
+
+interdecile range of G: 1.0777 reward units
+
+------------------------------------------------------------------------
+FROZEN CONSTANTS
+------------------------------------------------------------------------
+kappa  = 0.349547      (closed-form approximation 0.234029)
+log Z  = -1.531728      Z = 0.216162
+mode   = both    decades = 1.0    clamp = alpha x [1/10, 10]
+
+alpha_eff  geometric mean 0.010000  (target 0.01)
+           arithmetic     0.013871  (above it, by Jensen)
+           q10 0.00263   q90 0.02627   spread 1.0000 decades
+           clamped 2.69% of samples
+
+predicted sigma* bulk  [0.3295, 1.0421]   pinned at A1's 0.6429
+predicted sigma* clamp [0.2033, 2.0331]   actor bounds [0.0067, 7.3891]
+R4 (clamps respected): PASS
+
+------------------------------------------------------------------------
+ALLOCATION QUADRANTS   (boundary band = one kappa)
+------------------------------------------------------------------------
+                                      target vague    target clear
+owns nothing      (g >= 0)                   9.98%           4.30%
+contested         (|g| < k)                 24.55%          11.72%
+secure owner      (g < -k)                  11.53%          48.61%
+
+WHICH DIAGRAM IS DECIDING   (G = max(g, -m))
+  landmark-sited  (G = -m)    43.95%
+  agent-sited     (G =  g)    56.05%
+  corr(g, -m) = +0.6854   (R^2 = 0.470)
+  Both branches well away from 0% and 100% is what 'combines two
+  Voronoi diagrams' has to mean in practice; if either were near 0
+  the arm would really be using one diagram and should be
+  simplified to it.
+
+  The two gaps are CORRELATED -- in trained play an agent with a
+  clear nearest landmark tends also to own it securely -- so they
+  are not independent evidence.  What the landmark margin cannot
+  supply is the SIGN, and the sign is what creates the division of
+  labour.  The check below asks whether m alone could stand in for
+  ownership:
+    best single m-threshold classifier for 'owns nothing': 85.7% at m < 0.00
+    base rate of always answering 'owns something':        85.7%
+    -> m carries no usable information about ownership.  The
+       agent-sited diagram is not redundant however correlated
+       the continuous gaps are.
+
+mean gate w:  owns nothing 0.6521   contested 0.4545   secure owner 0.1756
+
+------------------------------------------------------------------------
+COST OF FREEZING Z   (realised geometric mean of alpha_eff)
+------------------------------------------------------------------------
+Z is frozen so that the gate stays a fixed function of the
+observation.  The price is that the realised budget drifts as
+training moves the state distribution.  That drift is not a bug to
+be corrected online -- correcting it would reintroduce the moving
+scale the freeze exists to prevent -- but it MUST be reported,
+because a realised budget away from alpha means A1r is partly an
+'A1 at a different alpha' comparison.
+
+      rung    geo mean   / alpha  sigma factor  spread (dec)
+      2000    0.015755     1.575         1.255         0.620
+     10000    0.010541     1.054         1.027         0.955
+     20000    0.009231     0.923         0.961         1.056
+     30000    0.008796     0.880         0.938         1.095
+     40000    0.008708     0.871         0.933         1.082
+     50000    0.008517     0.852         0.923         1.084
+
+  sigma factor is sqrt of the alpha ratio, since sigma* propto
+  sqrt(alpha_eff).  Compare it against the seed-to-seed spread of
+  A1's own sigma before deciding whether the drift matters.
+  If 'spread' collapses towards 0 the allocation has flattened and
+  A1r has quietly become A1.
+
+------------------------------------------------------------------------
+tau BASELINE  (A1's own sigma head, against the frozen gate)
+------------------------------------------------------------------------
+slope of log sigma on (1/2) log alpha_eff : +0.0282   (r = +0.0810)
+
+  A1 trained at constant alpha, so it had no reason to track this gate.
+  Whatever slope appears here is background correlation between the sigma
+  head and the geometry.  A1r's tau is read against THIS number, not zero:
+      tau = (A1r slope - +0.0282) / (1 - +0.0282)
+  tau ~ 1 -> pointwise cancellation, predicted null.
+  tau ~ 0 -> manipulation not delivered, INCONCLUSIVE not null.
+  0 < tau < 1 -> the only regime in which A1r can move anything.
+
+      rung     slope        r   mean sigma
+      2000   -0.0249  -0.0578       0.7140
+     10000   +0.0130  +0.0530       0.6898
+     20000   +0.0062  +0.0255       0.6434
+     30000   +0.0068  +0.0256       0.6303
+     40000   +0.0017  +0.0050       0.5898
+     50000   -0.0326  -0.0805       0.5902
+
+========================================================================
+KILL-SWITCH VERDICT  (rules fixed before the numbers were seen)
+========================================================================
+  RUN A1r AS DESIGNED
+    - interdecile G = 1.0777 reward units and 14.28% of samples own nothing: both diagrams carry usable signal

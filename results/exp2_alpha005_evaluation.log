@@ -1,0 +1,201 @@
+NOTE: the banner below is emitted by exp3_provenance.py, which is shared
+across arms. This log covers an EXPERIMENT 2 arm: alpha = 0.05, four seeds,
+50,000 episodes, evaluated against alpha = 0.01 as control.
+
+========================================================================
+EXPERIMENT 3 -- HELD-OUT EVALUATION LOG
+========================================================================
+  generated        : 2026-09-16 10:08:26 UTC
+  working directory: /sessions/rcw-01xcxh2ya5a2m8falqu2uaue/mnt/baseline_fixed
+  platform         : Linux-6.8.0-138-generic-aarch64-with-glibc2.35  aarch64
+  python           : 3.10.12
+  torch            : 2.8.0+cpu
+  numpy            : 2.0.2
+  scipy            : 1.13.1
+  gymnasium        : 1.1.1
+  pettingzoo       : 1.26.1
+  mpe2             : 1.1.0
+
+------------------------------------------------------------------------
+CODE FINGERPRINTS  (sha256, first 16 hex)
+------------------------------------------------------------------------
+  Any change to these files changes the numbers below.
+  dd4f2e7b369ab13c  exp3_ladder.py
+  65b048875fd875c1  exp3_outcome.py
+  6dd3f3f5a8507df0  token_diversity.py
+  32485cc491d280eb  environment.py
+  edd298702ee2cd7c  maddpg_system.py
+  f73e99769748f73c  replay_buffer.py
+  48d7850d91a6863f  models/actor.py
+  37e78889258ed309  models/critic.py
+  0032fc31f002c2e4  exp3/train_exp3.py
+
+------------------------------------------------------------------------
+EVALUATION PROTOCOL
+------------------------------------------------------------------------
+  held-out layouts : 200, seeds 900,000,000 .. 900,000,199
+  disjoint from    : training, which uses SEED*1,000,000 + episode
+  policy           : DETERMINISTIC (actor mean, no sampling)
+  measure          : D = H(f_bar) - mean_i H(f_i), bits
+                     tokens = nearest landmark, from obs[4:10]
+                     bound  = log2 min(N,|A|) = 1.5850 bits
+  empirical zero   : permutation null, 25 shuffles per layout
+  statistic        : matched-return Delta D, reported under
+                     branch = ascending (primary, pre-registered)
+                     branch = any        (declared secondary)
+
+------------------------------------------------------------------------
+CHECKPOINT INVENTORY
+------------------------------------------------------------------------
+  alpha_0.01 seed  42:  25 rungs, best.pt written 2026-09-06 17:45
+  alpha_0.01 seed 128:  25 rungs, best.pt written 2026-09-06 19:29
+  alpha_0.01 seed 456:  25 rungs, best.pt written 2026-09-06 21:00
+  alpha_0.01 seed 789:  25 rungs, best.pt written 2026-09-06 22:34
+  alpha_0.05 seed  42:  25 rungs, best.pt written 2026-09-13 18:43
+  alpha_0.05 seed 128:  25 rungs, best.pt written 2026-09-13 20:16
+  alpha_0.05 seed 456:  25 rungs, best.pt written 2026-09-13 21:50
+  alpha_0.05 seed 789:  25 rungs, best.pt written 2026-09-13 23:19
+
+
+========================================================================
+RUN NOTE -- where this evaluation was executed
+========================================================================
+  Evaluation run in the Linux VM reachable from the Claude desktop
+  session, in a venv built against the pins recorded above. Training
+  of all arms remains on macOS: training is NOT portable (a fresh VM
+  run diverges from stored arrays at episode 6), evaluation IS.
+  Validation gate before any new figure was trusted:
+    checkpoints/baseline/seed_42/ckpt_ep2000.pt
+    expected return -35.580 / D 0.9306   ->  got -35.580 / 0.9306  PASS
+  Second independent check, unplanned:
+    alpha_0.01 best.pt reproduced the published four-seed figures
+    return -18.086 +/- 0.811, D 1.2273 +/- 0.0109.
+
+========================================================================
+HEADLINE -- held-out, deterministic, 200 layouts, four seeds
+========================================================================
+  alpha=0.01  best.pt        return     -18.0862 +/- 0.8112
+  alpha=0.01  best.pt        D (bits)     1.2273 +/- 0.0109
+  alpha=0.01  best.pt        sigma        0.6663 +/- 0.0202
+
+  alpha=0.05  best.pt        return     -15.5466 +/- 0.1363
+  alpha=0.05  best.pt        D (bits)     1.2387 +/- 0.0067
+  alpha=0.05  best.pt        sigma        1.0858 +/- 0.0161
+
+  alpha=0.05  ep10000        return     -19.7273 +/- 0.2208
+  alpha=0.05  ep10000        D (bits)     1.2040 +/- 0.0052
+  alpha=0.05  ep10000        sigma        1.2653 +/- 0.0130
+
+  PAIRED, each arm at its own best.pt:
+    d(return) = +2.540 +/- 0.811  t(3) = +6.26
+    d(raw D)  = +0.0114 +/- 0.0175  t(3) = +1.30
+
+  COMPETENCE-PROXY CHECK: raw D is confounded with return at
+  0.015-0.025 bits per reward unit (within-policy slope). A return
+  gain of +2.540 units predicts +0.0381 to +0.0635 bits of D
+  from the performance channel alone. Observed raw dD is +0.0114 --
+  BELOW what competence alone would buy.
+
+  SIGMA CALIBRATION:
+    measured sigma at best.pt : alpha=0.01 0.6663 | alpha=0.05 1.0858
+    law sigma = 10.11*alpha^0.553 (fit at 3,000 episodes) predicts
+      alpha=0.01 -> 0.7920   alpha=0.05 -> 1.9288
+    implied exponent between these two arms at 50k episodes:
+      ln(s05/s01)/ln(5) = 0.3035   (theory 0.5, 3k-fit 0.553)
+    both well inside the LOG_STD clamps [0.0067, 7.39].
+
+========================================================================
+LADDER COVERAGE
+========================================================================
+  alpha_0.01     rungs per seed [25, 25, 25, 25]   best.pt present: 4/4
+  alpha_0.05     rungs per seed [25, 25, 25, 25]   best.pt present: 4/4
+
+========================================================================
+HYSTERESIS FLOOR -- measured inside the control arm alone
+========================================================================
+  descending minus ascending D at matched return
+  per seed: -0.0035  -0.0095  -0.0062
+  matched pairs per seed: [2, 2, 1]
+  mean -0.0064 +/- 0.0030 bits   t(2) = -3.70
+
+  This is the bias that matching on return alone leaves
+  uncontrolled. Compare it with the effect below.
+
+========================================================================
+MATCHED-RETURN DELTA D   [branch = ascending]
+========================================================================
+  seed  42: control  -18.895 / D 1.2118   vs treatment ep   12000  -19.148 / D 1.2085   gap -0.252   dD -0.0033
+  seed 128: control  -17.399 / D 1.2346   vs treatment ep   16000  -17.737 / D 1.2187   gap -0.338   dD -0.0159
+  seed 456: control  -17.377 / D 1.2351   vs treatment ep   16000  -17.464 / D 1.2318   gap -0.087   dD -0.0034
+  seed 789: control  -18.673 / D 1.2278   vs treatment ep   12000  -18.316 / D 1.2256   gap +0.357   dD -0.0022
+
+  Delta D matched = -0.0062 +/- 0.0065 bits   t(3) = -1.91
+  mean |return gap| = 0.258
+
+========================================================================
+MATCHED-RETURN DELTA D   [branch = any]
+========================================================================
+  seed  42: control  -18.895 / D 1.2118   vs treatment ep   12000  -19.148 / D 1.2085   gap -0.252   dD -0.0033
+  seed 128: control  -17.399 / D 1.2346   vs treatment ep   16000  -17.737 / D 1.2187   gap -0.338   dD -0.0159
+  seed 456: control  -17.377 / D 1.2351   vs treatment ep   16000  -17.464 / D 1.2318   gap -0.087   dD -0.0034
+  seed 789: control  -18.673 / D 1.2278   vs treatment ep   12000  -18.316 / D 1.2256   gap +0.357   dD -0.0022
+
+  Delta D matched = -0.0062 +/- 0.0065 bits   t(3) = -1.91
+  mean |return gap| = 0.258
+
+========================================================================
+READING -- what this arm does and does not license
+========================================================================
+  1. COMPETENCE. alpha=0.05 beats alpha=0.01 by +2.540 +/- 0.811 reward
+     units, t(3) = +6.26. The competence gain from policy entropy is
+     still climbing at five times the Exp 2 coefficient, and alpha=0.05
+     is also far tighter across seeds (SD 0.136 vs 0.811).
+
+  2. DIVERSITY. Matched-return Delta D = -0.0062 +/- 0.0065 bits,
+     t(3) = -1.91. Negative, and not distinguishable from zero. A third
+     null, on the same primary statistic as A1 and A2.
+
+  3. THE FLOOR IS ALMOST GONE HERE, which is the important part.
+     Both arms plateau rather than collapsing, so the control arm has
+     barely any descending branch: the hysteresis floor measured inside
+     alpha=0.01 is -0.0064 +/- 0.0030 bits from only 1-2 matched pairs
+     per seed, against +0.0566 inside the collapsing alpha=0 arm.
+     The branch restriction is consequently INERT -- ascending and
+     unrestricted give identical answers, exactly as pre-registered for
+     a plateauing arm.
+     With the bias floor collapsed, the binding constraint reverts to
+     the statistical one, and the paired SD here is 0.0065 rather than
+     Exp 2's 0.0148:
+         MDE at n=4, 80% power  =  0.0135 bits
+     So this comparison excludes a diversity effect larger than about
+     0.014 bits -- roughly FOUR TIMES tighter than any previous arm,
+     and about 0.9% of the log2(3) bound.
+
+  4. RAW D IS THE TRAP, AND IT IS VISIBLE HERE. At each arm's own
+     best.pt raw Delta D is +0.0114 -- positive, and it would have been
+     reportable as "more entropy gives more diversity". But the +2.540
+     reward-unit competence gain alone predicts +0.038 to +0.064 bits
+     through the performance channel. Raw D rose LESS than competence
+     alone would buy, which is why the matched statistic is negative.
+
+  5. GAMING MONITOR INVERTS FOR THIS ARM. sigma is SUPPOSED to rise:
+     1.0858 +/- 0.0161 at alpha=0.05 against 0.6663 +/- 0.0202 at
+     alpha=0.01. D cannot be inflated by this channel -- the measure is
+     computed on the deterministic pass, and more action noise raises
+     each agent's within-episode token entropy, which LOWERS D.
+
+  6. NEW, UNPLANNED FINDING -- the sigma-alpha exponent has fallen.
+     The calibration law sigma = 10.11*alpha^0.553, fitted at 3,000
+     episodes, predicts 1.929 at alpha=0.05; the measured value at
+     best.pt is 1.086. The implied exponent between the two arms at
+     50,000 episodes is 0.3035, against the 3k fit of 0.553 and the
+     theoretical 0.5. Since sigma* = sqrt(alpha/c), an exponent of 0.30
+     implies critic curvature c growing as roughly alpha^0.39 at
+     convergence, where the 3k fit implied c falling as alpha^-0.106.
+     Two points only -- this is a flag for the write-up, not a fit.
+
+  CAVEAT CARRIED FORWARD: matched-return Delta D is reported here
+  against alpha=0.01 as control. This arm has NOT been compared to the
+  alpha=0 baseline on the same statistic; that comparison inherits the
+  collapsing baseline's +0.0566-bit floor and would be far less
+  sensitive than the one above.

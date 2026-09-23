@@ -1,0 +1,25 @@
+# ---- Python environment and caches (rebuilt automatically) ----
+.venv/
+__pycache__/
+*.pyc
+
+# ---- macOS clutter ----
+.DS_Store
+
+# ---- Throwaway mirrors built by the test scripts ----
+.reduction_test/
+.a1r_reduction_test/
+
+# ---- Model checkpoints: keep ONLY best.pt ----
+/checkpoints/**
+!/checkpoints/**/
+!/checkpoints/**/best.pt
+
+# ---- Per-episode training histories (large; kept on the Mac + backup) ----
+/results/*/seed_*/
+
+# ---- Training logs (large; kept on the Mac + backup) ----
+/train_*.log
+/exp2/*.log
+/A1r/a1r_both_seed*.log
+/logs/

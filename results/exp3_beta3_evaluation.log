@@ -1,0 +1,253 @@
+========================================================================
+EXPERIMENT 3 -- HELD-OUT EVALUATION LOG
+========================================================================
+  generated        : 2026-09-09 18:07:17 UTC
+  working directory: /sessions/rcw-01rmhspkctc3snddmloeifnt/mnt/baseline_fixed
+  platform         : Linux-6.8.0-136-generic-aarch64-with-glibc2.35  aarch64
+  python           : 3.10.12
+  torch            : 2.8.0+cpu
+  numpy            : 2.0.2
+  scipy            : 1.13.1
+  gymnasium        : 1.1.1
+  pettingzoo       : 1.26.1
+  mpe2             : 1.1.0
+
+------------------------------------------------------------------------
+CODE FINGERPRINTS  (sha256, first 16 hex)
+------------------------------------------------------------------------
+  Any change to these files changes the numbers below.
+  dd4f2e7b369ab13c  exp3_ladder.py
+  65b048875fd875c1  exp3_outcome.py
+  6dd3f3f5a8507df0  token_diversity.py
+  32485cc491d280eb  environment.py
+  edd298702ee2cd7c  maddpg_system.py
+  f73e99769748f73c  replay_buffer.py
+  48d7850d91a6863f  models/actor.py
+  37e78889258ed309  models/critic.py
+  0032fc31f002c2e4  exp3/train_exp3.py
+
+------------------------------------------------------------------------
+EVALUATION PROTOCOL
+------------------------------------------------------------------------
+  held-out layouts : 200, seeds 900,000,000 .. 900,000,199
+  disjoint from    : training, which uses SEED*1,000,000 + episode
+  policy           : DETERMINISTIC (actor mean, no sampling)
+  measure          : D = H(f_bar) - mean_i H(f_i), bits
+                     tokens = nearest landmark, from obs[4:10]
+                     bound  = log2 min(N,|A|) = 1.5850 bits
+  empirical zero   : permutation null, 25 shuffles per layout
+  statistic        : matched-return Delta D, reported under
+                     branch = ascending (primary, pre-registered)
+                     branch = any        (declared secondary)
+
+------------------------------------------------------------------------
+CHECKPOINT INVENTORY
+------------------------------------------------------------------------
+  baseline   seed  42:  25 rungs, best.pt written 2026-09-05 15:11
+  baseline   seed 128:  25 rungs, best.pt written 2026-09-05 15:11
+  baseline   seed 456:  25 rungs, best.pt written 2026-09-05 17:10
+  baseline   seed 789:  25 rungs, best.pt written 2026-09-05 17:08
+  beta_3     seed  42:  25 rungs, best.pt written 2026-09-09 12:33
+  beta_3     seed 128:  25 rungs, best.pt written 2026-09-09 13:53
+  beta_3     seed 456:  25 rungs, best.pt written 2026-09-09 15:23
+  beta_3     seed 789:  25 rungs, best.pt written 2026-09-09 17:01
+
+------------------------------------------------------------------------
+PER-CHECKPOINT EVALUATION  (200 held-out layouts each)
+------------------------------------------------------------------------
+  command: python exp3_ladder.py --fill --arms baseline beta_3
+
+cache: 104 / 208 present, 104 to do
+  beta_3       seed  42 ep   2000  return  -37.422  D 0.9340  sigma 0.0072   [ 5.8s]
+  beta_3       seed  42 ep   4000  return  -32.172  D 1.0159  sigma 0.0068   [ 5.2s]
+  beta_3       seed  42 ep   6000  return  -30.393  D 1.0538  sigma 0.0068   [ 5.2s]
+  beta_3       seed  42 ep   8000  return  -29.931  D 1.0639  sigma 0.0068   [ 5.2s]
+  beta_3       seed  42 ep  10000  return  -29.798  D 1.0672  sigma 0.0068   [ 5.1s]
+  beta_3       seed  42 ep  12000  return  -29.037  D 1.0777  sigma 0.0067   [ 5.1s]
+  beta_3       seed  42 ep  14000  return  -28.293  D 1.0786  sigma 0.0068   [ 5.1s]
+  beta_3       seed  42 ep  16000  return  -29.000  D 1.1023  sigma 0.0067   [ 5.2s]
+  beta_3       seed  42 ep  18000  return  -29.777  D 1.0920  sigma 0.0067   [ 5.3s]
+  beta_3       seed  42 ep  20000  return  -30.638  D 1.0980  sigma 0.0067   [ 5.2s]
+  beta_3       seed  42 ep  22000  return  -32.831  D 1.0474  sigma 0.0067   [ 5.1s]
+  beta_3       seed  42 ep  24000  return  -31.568  D 1.0728  sigma 0.0067   [ 5.2s]
+  beta_3       seed  42 ep  26000  return  -32.976  D 1.0811  sigma 0.0067   [ 5.2s]
+  beta_3       seed  42 ep  28000  return  -34.366  D 1.0534  sigma 0.0067   [ 5.1s]
+  beta_3       seed  42 ep  30000  return  -36.108  D 1.0423  sigma 0.0067   [ 5.2s]
+  beta_3       seed  42 ep  32000  return  -34.518  D 1.0502  sigma 0.0067   [ 5.1s]
+  beta_3       seed  42 ep  34000  return  -34.245  D 1.0326  sigma 0.0067   [ 5.1s]
+  beta_3       seed  42 ep  36000  return  -34.525  D 1.0100  sigma 0.0067   [ 5.2s]
+  beta_3       seed  42 ep  38000  return  -34.536  D 1.0327  sigma 0.0067   [ 5.2s]
+  beta_3       seed  42 ep  40000  return  -35.643  D 0.9691  sigma 0.0067   [ 5.1s]
+  beta_3       seed  42 ep  42000  return  -35.297  D 1.0097  sigma 0.0067   [ 5.2s]
+  beta_3       seed  42 ep  44000  return  -36.736  D 0.9920  sigma 0.0067   [ 5.1s]
+  beta_3       seed  42 ep  46000  return  -36.959  D 0.9815  sigma 0.0067   [ 5.2s]
+  beta_3       seed  42 ep  48000  return  -36.858  D 0.9574  sigma 0.0067   [ 5.2s]
+  beta_3       seed  42 ep  50000  return  -38.144  D 1.0064  sigma 0.0067   [ 5.2s]
+  beta_3       seed  42 ep     -1  return  -28.767  D 1.0957  sigma 0.0068   [ 5.2s]
+  beta_3       seed 128 ep   2000  return  -36.529  D 0.9264  sigma 0.0071   [ 5.2s]
+  beta_3       seed 128 ep   4000  return  -31.909  D 1.0145  sigma 0.0068   [ 5.2s]
+  beta_3       seed 128 ep   6000  return  -31.243  D 1.0008  sigma 0.0067   [ 5.2s]
+  budget reached, stopping cleanly
+filled 29 this session; 75 still outstanding
+cache: 133 / 208 present, 75 to do
+  beta_3       seed 128 ep   8000  return  -31.125  D 1.0191  sigma 0.0067   [ 5.8s]
+  beta_3       seed 128 ep  10000  return  -30.223  D 1.0311  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  12000  return  -30.511  D 1.0788  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  14000  return  -29.555  D 1.0800  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  16000  return  -31.235  D 1.0554  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  18000  return  -31.920  D 1.0629  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  20000  return  -32.139  D 1.0573  sigma 0.0067   [ 5.2s]
+  beta_3       seed 128 ep  22000  return  -34.014  D 1.0234  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  24000  return  -33.163  D 1.0216  sigma 0.0067   [ 5.2s]
+  beta_3       seed 128 ep  26000  return  -34.265  D 1.0191  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  28000  return  -33.649  D 1.0328  sigma 0.0067   [ 5.2s]
+  beta_3       seed 128 ep  30000  return  -34.877  D 1.0434  sigma 0.0067   [ 5.2s]
+  beta_3       seed 128 ep  32000  return  -34.282  D 1.0142  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  34000  return  -34.924  D 1.0148  sigma 0.0067   [ 5.2s]
+  beta_3       seed 128 ep  36000  return  -33.999  D 1.0077  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  38000  return  -33.339  D 1.0605  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  40000  return  -33.991  D 1.0238  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  42000  return  -34.293  D 1.0552  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  44000  return  -35.912  D 1.0538  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  46000  return  -32.593  D 1.0389  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  48000  return  -33.270  D 1.0371  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep  50000  return  -33.350  D 1.0580  sigma 0.0067   [ 5.3s]
+  beta_3       seed 128 ep     -1  return  -29.878  D 1.0299  sigma 0.0067   [ 5.4s]
+  beta_3       seed 456 ep   2000  return  -37.078  D 0.8937  sigma 0.0069   [ 5.3s]
+  beta_3       seed 456 ep   4000  return  -31.802  D 1.0062  sigma 0.0068   [ 5.3s]
+  beta_3       seed 456 ep   6000  return  -30.929  D 1.0556  sigma 0.0067   [ 5.2s]
+  beta_3       seed 456 ep   8000  return  -28.624  D 1.0676  sigma 0.0067   [ 5.2s]
+  beta_3       seed 456 ep  10000  return  -29.360  D 1.0228  sigma 0.0067   [ 5.2s]
+  beta_3       seed 456 ep  12000  return  -28.227  D 1.0977  sigma 0.0067   [ 5.3s]
+  budget reached, stopping cleanly
+filled 29 this session; 46 still outstanding
+cache: 162 / 208 present, 46 to do
+  beta_3       seed 456 ep  14000  return  -28.592  D 1.0885  sigma 0.0067   [ 5.7s]
+  beta_3       seed 456 ep  16000  return  -28.631  D 1.0791  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  18000  return  -28.436  D 1.0934  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  20000  return  -29.975  D 1.0632  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  22000  return  -30.752  D 1.0391  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  24000  return  -31.535  D 1.0191  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  26000  return  -33.850  D 1.0272  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  28000  return  -34.297  D 1.0311  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  30000  return  -33.857  D 1.0421  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  32000  return  -35.198  D 1.0315  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  34000  return  -35.281  D 1.0007  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  36000  return  -34.438  D 1.0328  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  38000  return  -35.268  D 1.0121  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  40000  return  -34.286  D 1.0255  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  42000  return  -36.897  D 1.0271  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  44000  return  -37.693  D 0.9628  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  46000  return  -35.315  D 1.0143  sigma 0.0067   [ 5.1s]
+  beta_3       seed 456 ep  48000  return  -38.140  D 0.9537  sigma 0.0067   [ 5.2s]
+  beta_3       seed 456 ep  50000  return  -36.395  D 0.9938  sigma 0.0067   [ 5.2s]
+  beta_3       seed 456 ep     -1  return  -27.642  D 1.1119  sigma 0.0067   [ 5.1s]
+  beta_3       seed 789 ep   2000  return  -38.541  D 0.8987  sigma 0.0076   [ 5.1s]
+  beta_3       seed 789 ep   4000  return  -32.140  D 0.9683  sigma 0.0067   [ 5.1s]
+  beta_3       seed 789 ep   6000  return  -31.267  D 1.0182  sigma 0.0068   [ 5.1s]
+  beta_3       seed 789 ep   8000  return  -31.339  D 1.0143  sigma 0.0071   [ 5.1s]
+  beta_3       seed 789 ep  10000  return  -31.890  D 1.0499  sigma 0.0067   [ 5.3s]
+  beta_3       seed 789 ep  12000  return  -29.892  D 1.0451  sigma 0.0068   [ 5.1s]
+  beta_3       seed 789 ep  14000  return  -30.603  D 1.0752  sigma 0.0067   [ 5.2s]
+  beta_3       seed 789 ep  16000  return  -30.157  D 1.0959  sigma 0.0067   [ 5.1s]
+  beta_3       seed 789 ep  18000  return  -29.533  D 1.1103  sigma 0.0067   [ 5.1s]
+  beta_3       seed 789 ep  20000  return  -32.479  D 1.0612  sigma 0.0067   [ 5.1s]
+  budget reached, stopping cleanly
+filled 30 this session; 16 still outstanding
+cache: 192 / 208 present, 16 to do
+  beta_3       seed 789 ep  22000  return  -31.963  D 1.0506  sigma 0.0067   [ 5.8s]
+  beta_3       seed 789 ep  24000  return  -31.536  D 1.0323  sigma 0.0067   [ 5.2s]
+  beta_3       seed 789 ep  26000  return  -31.947  D 1.0436  sigma 0.0067   [ 5.2s]
+  beta_3       seed 789 ep  28000  return  -33.409  D 1.0173  sigma 0.0067   [ 5.3s]
+  beta_3       seed 789 ep  30000  return  -31.369  D 1.0316  sigma 0.0067   [ 5.2s]
+  beta_3       seed 789 ep  32000  return  -33.334  D 1.0182  sigma 0.0067   [ 5.2s]
+  beta_3       seed 789 ep  34000  return  -33.042  D 1.0397  sigma 0.0067   [ 5.2s]
+  beta_3       seed 789 ep  36000  return  -33.727  D 1.0140  sigma 0.0067   [ 5.2s]
+  beta_3       seed 789 ep  38000  return  -35.309  D 1.0241  sigma 0.0067   [ 5.2s]
+  beta_3       seed 789 ep  40000  return  -35.932  D 0.9881  sigma 0.0067   [ 5.2s]
+  beta_3       seed 789 ep  42000  return  -35.729  D 0.9991  sigma 0.0067   [ 5.3s]
+  beta_3       seed 789 ep  44000  return  -34.907  D 0.9871  sigma 0.0067   [ 5.3s]
+  beta_3       seed 789 ep  46000  return  -34.632  D 1.0104  sigma 0.0067   [ 5.2s]
+  beta_3       seed 789 ep  48000  return  -35.623  D 0.9961  sigma 0.0067   [ 6.7s]
+  beta_3       seed 789 ep  50000  return  -35.692  D 1.0221  sigma 0.0067   [ 5.2s]
+  beta_3       seed 789 ep     -1  return  -29.427  D 1.0695  sigma 0.0067   [ 5.2s]
+filled 16 this session; 0 still outstanding
+
+------------------------------------------------------------------------
+ANALYSIS
+------------------------------------------------------------------------
+  command: python exp3_ladder.py --report --control baseline --treatment beta_3
+
+========================================================================
+LADDER COVERAGE
+========================================================================
+  baseline       rungs per seed [25, 25, 25, 25]   best.pt present: 4/4
+  beta_3         rungs per seed [25, 25, 25, 25]   best.pt present: 4/4
+
+========================================================================
+HYSTERESIS FLOOR -- measured inside the control arm alone
+========================================================================
+  descending minus ascending D at matched return
+  per seed: +0.0486  +0.0407  +0.0904  +0.0466
+  matched pairs per seed: [13, 7, 14, 7]
+  mean +0.0566 +/- 0.0228 bits   t(3) = +4.96
+
+  This is the bias that matching on return alone leaves
+  uncontrolled. Compare it with the effect below.
+
+========================================================================
+MATCHED-RETURN DELTA D   [branch = ascending]
+========================================================================
+  seed  42: control  -27.707 / D 1.0431   vs treatment ep   14000  -28.293 / D 1.0786   gap -0.586   dD +0.0355
+  seed 128: control  -28.807 / D 1.0634   vs treatment ep   14000  -29.555 / D 1.0800   gap -0.748   dD +0.0165
+  seed 456: control  -28.869 / D 1.0658   vs treatment ep    8000  -28.624 / D 1.0676   gap +0.245   dD +0.0018
+  seed 789: control  -27.822 / D 1.0856   vs treatment ep      -1  -29.427 / D 1.0695   gap -1.605   dD -0.0161
+
+  Delta D matched = +0.0094 +/- 0.0219 bits   t(3) = +0.86
+  mean |return gap| = 0.796
+  WARNING seeds outside tolerance: [789]
+
+========================================================================
+MATCHED-RETURN DELTA D   [branch = any]
+========================================================================
+  seed  42: control  -27.707 / D 1.0431   vs treatment ep   14000  -28.293 / D 1.0786   gap -0.586   dD +0.0355
+  seed 128: control  -28.807 / D 1.0634   vs treatment ep   14000  -29.555 / D 1.0800   gap -0.748   dD +0.0165
+  seed 456: control  -28.869 / D 1.0658   vs treatment ep   16000  -28.631 / D 1.0791   gap +0.238   dD +0.0133
+  seed 789: control  -27.822 / D 1.0856   vs treatment ep      -1  -29.427 / D 1.0695   gap -1.605   dD -0.0161
+
+  Delta D matched = +0.0123 +/- 0.0213 bits   t(3) = +1.16
+  mean |return gap| = 0.794
+  WARNING seeds outside tolerance: [789]
+
+------------------------------------------------------------------------
+PRE-REGISTERED COMPANION CHECKS
+------------------------------------------------------------------------
+
+1. GAMING TRIPWIRE -- sigma against the 0.02 threshold (floor 0.0067)
+   seed  42: min 0.0067  max 0.0072
+   seed 128: min 0.0067  max 0.0071
+   seed 456: min 0.0067  max 0.0069
+   seed 789: min 0.0067  max 0.0076
+   VERDICT: max sigma over all beta_3 checkpoints = 0.0076
+            PASS -- the bonus was not gamed through action noise
+
+2. COMPETENCE COST -- unshaped held-out return at each arm's own best.pt
+   seed  42: baseline  -27.707   beta_3  -28.767   diff  -1.060
+   seed 128: baseline  -28.807   beta_3  -29.878   diff  -1.071
+   seed 456: baseline  -28.869   beta_3  -27.642   diff  +1.227
+   seed 789: baseline  -27.822   beta_3  -29.427   diff  -1.605
+   mean -0.627 +/- 1.262 reward units   t(3) = -0.99
+
+3. RAW Delta D at each arm's own best.pt (NOT the outcome measure)
+   seed  42: baseline 1.0431   beta_3 1.0957   dD +0.0526
+   seed 128: baseline 1.0634   beta_3 1.0299   dD -0.0335
+   seed 456: baseline 1.0658   beta_3 1.1119   dD +0.0461
+   seed 789: baseline 1.0856   beta_3 1.0695   dD -0.0161
+   mean +0.0123 +/- 0.0435 bits   t(3) = +0.56
+   Reported for completeness only: raw D is confounded with competence,
+   which is why the matched-return statistic is the pre-registered primary.
+
+4. PERMUTATION NULL -- the empirical zero, averaged over all rungs
+   baseline  : 0.0390 bits  (Miller-Madow predicts 0.0385)
+   beta_3    : 0.0389 bits  (Miller-Madow predicts 0.0385)
+
