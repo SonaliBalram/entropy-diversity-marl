@@ -60,8 +60,8 @@ CHECKPOINT INVENTORY
 ========================================================================
 RUN NOTE -- where this evaluation was executed
 ========================================================================
-  Evaluation run in the Linux VM reachable from the Claude desktop
-  session, in a venv built against the pins recorded above. Training
+  Evaluation run in a Linux VM, in a venv built against the pins
+  recorded above. Training
   of all arms remains on macOS: training is NOT portable (a fresh VM
   run diverges from stored arrays at episode 6), evaluation IS.
   Validation gate before any new figure was trusted:
