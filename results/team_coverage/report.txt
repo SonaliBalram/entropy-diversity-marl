@@ -1,0 +1,38 @@
+==============================================================================
+TEAM COVERAGE  (deterministic pass, 3x3 grid, matched return)  --  EXPLORATORY
+==============================================================================
+
+  A1 vs A0   matched treatment checkpoints: ['ep4000', 'ep4000', 'ep4000', 'ep4000']   gaps: -0.449, +0.961, +1.226, +0.231
+    coverage_entropy     2.191 ->   2.184 bits   diff -0.0073 +/- 0.0263   t(3) =  -0.55    seeds positive: 1/4
+    cells_visited        5.915 ->   5.841 cells  diff -0.0737 +/- 0.1609   t(3) =  -0.92    seeds positive: 1/4
+    coverage_windowed    1.662 ->   1.660 bits   diff -0.0018 +/- 0.0085   t(3) =  -0.42    seeds positive: 2/4
+
+  A1r vs A1   matched treatment checkpoints: ['ep18000', 'ep46000', 'ep42000', 'ep30000']   gaps: +0.414, +0.000, -0.569, -0.029
+    coverage_entropy     2.114 ->   2.140 bits   diff +0.0251 +/- 0.0098   t(3) =  +5.11*   seeds positive: 4/4
+    cells_visited        5.714 ->   5.760 cells  diff +0.0462 +/- 0.0520   t(3) =  +1.78    seeds positive: 4/4
+    coverage_windowed    1.608 ->   1.630 bits   diff +0.0226 +/- 0.0147   t(3) =  +3.08    seeds positive: 4/4
+
+  A2w vs A0   matched treatment checkpoints: ['ep12000', 'ep16000', 'ep16000', 'best']   gaps: -1.081, +0.125, -0.363, -1.118
+    coverage_entropy     2.191 ->   2.157 bits   diff -0.0341 +/- 0.0171   t(3) =  -3.99*   seeds positive: 0/4
+    cells_visited        5.915 ->   5.764 cells  diff -0.1513 +/- 0.0682   t(3) =  -4.43*   seeds positive: 0/4
+    coverage_windowed    1.662 ->   1.633 bits   diff -0.0292 +/- 0.0112   t(3) =  -5.19*   seeds positive: 0/4
+
+  A2cw vs A2w   matched treatment checkpoints: ['best', 'ep12000', 'ep10000', 'ep8000']   gaps: +0.040, +0.103, +0.463, +0.515
+    coverage_entropy     2.169 ->   2.221 bits   diff +0.0526 +/- 0.0501   t(3) =  +2.10    seeds positive: 3/4
+    cells_visited        5.794 ->   6.020 cells  diff +0.2262 +/- 0.1340   t(3) =  +3.38*   seeds positive: 4/4
+    coverage_windowed    1.641 ->   1.676 bits   diff +0.0351 +/- 0.0271   t(3) =  +2.59    seeds positive: 3/4
+
+  A2cwT vs A2w   matched treatment checkpoints: ['ep6000', 'ep6000', 'ep8000', 'ep8000']   gaps: -0.461, -0.231, +0.108, -0.019
+    coverage_entropy     2.169 ->   2.201 bits   diff +0.0320 +/- 0.0434   t(3) =  +1.47    seeds positive: 3/4
+    cells_visited        5.794 ->   5.883 cells  diff +0.0887 +/- 0.1365   t(3) =  +1.30    seeds positive: 3/4
+    coverage_windowed    1.641 ->   1.652 bits   diff +0.0112 +/- 0.0380   t(3) =  +0.59    seeds positive: 3/4
+
+==============================================================================
+CHECKS
+==============================================================================
+  identity  mean_w H(fbar_w) = D_arena + mean H(f_iw):  max |residual| = 6.66e-16   PASS
+  matched checkpoints identical to the propagation matrix: PASS
+  status: exploratory diagnostic, no pre-registered verdict; 12 comparisons, so about one
+  |t| >= 3.18 ('*') is expected by chance. Read as a pattern alongside the propagation matrix.
+
+Saved -> /sessions/rcw-01e5nnr9pvtxwzcyjpvdzcgg/mnt/baseline_fixed/results/team_coverage/ (report.txt, coverage.npz, coverage.csv)

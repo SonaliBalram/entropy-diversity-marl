@@ -1,0 +1,61 @@
+============================================================================
+ANALYSIS  A2cwT  vs  A2w
+============================================================================
+         A2w seed  42: 25 rungs evaluated, best.pt (ep 11341) return -29.461
+         A2w seed 128: 25 rungs evaluated, best.pt (ep 10787) return -29.999
+         A2w seed 456: 25 rungs evaluated, best.pt (ep 13997) return -29.740
+         A2w seed 789: 25 rungs evaluated, best.pt (ep 13699) return -28.939
+       A2cwT seed  42: 25 rungs evaluated, best.pt (ep 48580) return -16.993
+       A2cwT seed 128: 25 rungs evaluated, best.pt (ep 48811) return -17.937
+       A2cwT seed 456: 25 rungs evaluated, best.pt (ep 49493) return -17.986
+       A2cwT seed 789: 25 rungs evaluated, best.pt (ep 49679) return -18.077
+
+============================================================================
+PRIMARY  matched-return Delta D, WINDOWED measure, ascending branch
+============================================================================
+
+  [Dwin, branch = ascending]
+    seed  42: A2w best.pt  -29.461 / 1.2007  vs A2cwT   ep6000  -29.922 / 1.1907  | gap -0.461 OK | dD -0.0100
+    seed 128: A2w best.pt  -29.999 / 1.2128  vs A2cwT   ep6000  -30.230 / 1.1862  | gap -0.231 OK | dD -0.0266
+    seed 456: A2w best.pt  -29.740 / 1.2175  vs A2cwT   ep8000  -29.631 / 1.1997  | gap +0.108 OK | dD -0.0177
+    seed 789: A2w best.pt  -28.939 / 1.2039  vs A2cwT   ep8000  -28.958 / 1.1912  | gap -0.019 OK | dD -0.0127
+    Delta D = -0.0168 +/- 0.0073 bits   t(3) = -4.60   mean |gap| = 0.205   (floor 0.041)
+
+    PRE-REGISTERED VERDICT: NOT CREDITED -- not distinguishable from zero under the registered rule (needs mean > 0.041 AND t(3) >= 3.18)
+
+============================================================================
+SECONDARY
+============================================================================
+
+  [Dwin, branch = any]
+    seed  42: A2w best.pt  -29.461 / 1.2007  vs A2cwT   ep6000  -29.922 / 1.1907  | gap -0.461 OK | dD -0.0100
+    seed 128: A2w best.pt  -29.999 / 1.2128  vs A2cwT   ep6000  -30.230 / 1.1862  | gap -0.231 OK | dD -0.0266
+    seed 456: A2w best.pt  -29.740 / 1.2175  vs A2cwT   ep8000  -29.631 / 1.1997  | gap +0.108 OK | dD -0.0177
+    seed 789: A2w best.pt  -28.939 / 1.2039  vs A2cwT   ep8000  -28.958 / 1.1912  | gap -0.019 OK | dD -0.0127
+    Delta D = -0.0168 +/- 0.0073 bits   t(3) = -4.60   mean |gap| = 0.205   (floor 0.041)
+
+  [Dold, branch = ascending]
+    seed  42: A2w best.pt  -29.461 / 1.0494  vs A2cwT   ep6000  -29.922 / 1.0376  | gap -0.461 OK | dD -0.0118
+    seed 128: A2w best.pt  -29.999 / 1.0578  vs A2cwT   ep6000  -30.230 / 1.0224  | gap -0.231 OK | dD -0.0354
+    seed 456: A2w best.pt  -29.740 / 1.0618  vs A2cwT   ep8000  -29.631 / 1.0256  | gap +0.108 OK | dD -0.0362
+    seed 789: A2w best.pt  -28.939 / 1.0669  vs A2cwT   ep8000  -28.958 / 1.0111  | gap -0.019 OK | dD -0.0558
+    Delta D = -0.0348 +/- 0.0180 bits   t(3) = -3.86   mean |gap| = 0.205   (floor 0.0566)
+
+  [Dold, branch = any]
+    seed  42: A2w best.pt  -29.461 / 1.0494  vs A2cwT   ep6000  -29.922 / 1.0376  | gap -0.461 OK | dD -0.0118
+    seed 128: A2w best.pt  -29.999 / 1.0578  vs A2cwT   ep6000  -30.230 / 1.0224  | gap -0.231 OK | dD -0.0354
+    seed 456: A2w best.pt  -29.740 / 1.0618  vs A2cwT   ep8000  -29.631 / 1.0256  | gap +0.108 OK | dD -0.0362
+    seed 789: A2w best.pt  -28.939 / 1.0669  vs A2cwT   ep8000  -28.958 / 1.0111  | gap -0.019 OK | dD -0.0558
+    Delta D = -0.0348 +/- 0.0180 bits   t(3) = -3.86   mean |gap| = 0.205   (floor 0.0566)
+
+============================================================================
+CHECKS
+============================================================================
+  competence cost (best.pt return, A2cwT - A2w): +11.787 +/- 0.682   t(3) = +34.56
+  seed  42: max training sigma from episode 2,000 = 0.0072   (whole run incl. initial transient: 1.0084)
+  seed 128: max training sigma from episode 2,000 = 0.0076   (whole run incl. initial transient: 1.0466)
+  seed 456: max training sigma from episode 2,000 = 0.0077   (whole run incl. initial transient: 1.0014)
+  seed 789: max training sigma from episode 2,000 = 0.0075   (whole run incl. initial transient: 0.9436)
+  gaming tripwire: not hit (all under 0.02)
+
+Saved -> results/exp3_windowed/analysis_A2cwT_vs_A2w.npz

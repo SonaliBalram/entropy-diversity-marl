@@ -1,0 +1,154 @@
+==============================================================================
+VALIDATION GATE
+==============================================================================
+  A0 seed 42 ep2000: return -35.580 (want -35.58), D 0.9306 bits (want 0.9306)  ->  PASS
+     A0 seed  42:  0 rungs, best.pt (ep 10444) return -27.707
+     A0 seed 128:  0 rungs, best.pt (ep 10597) return -28.807
+     A0 seed 456:  0 rungs, best.pt (ep 11553) return -28.869
+     A0 seed 789:  0 rungs, best.pt (ep 10272) return -27.822
+     A1 seed  42: 25 rungs, best.pt (ep 42322) return -18.895
+     A1 seed 128: 25 rungs, best.pt (ep 49837) return -17.399
+     A1 seed 456: 25 rungs, best.pt (ep 49493) return -17.377
+     A1 seed 789: 25 rungs, best.pt (ep 49625) return -18.673
+    A1r seed  42: 25 rungs, best.pt (ep 42330) return -16.864
+    A1r seed 128: 25 rungs, best.pt (ep 48379) return -17.438
+    A1r seed 456: 25 rungs, best.pt (ep 49493) return -18.529
+    A1r seed 789: 25 rungs, best.pt (ep 47314) return -17.512
+    A2w seed  42: 25 rungs, best.pt (ep 11341) return -29.461
+    A2w seed 128: 25 rungs, best.pt (ep 10787) return -29.999
+    A2w seed 456: 25 rungs, best.pt (ep 13997) return -29.740
+    A2w seed 789: 25 rungs, best.pt (ep 13699) return -28.939
+   A2cw seed  42: 25 rungs, best.pt (ep 11336) return -29.421
+   A2cw seed 128: 25 rungs, best.pt (ep 17469) return -28.151
+   A2cw seed 456: 25 rungs, best.pt (ep 11702) return -30.152
+   A2cw seed 789: 25 rungs, best.pt (ep 14679) return -28.933
+  A2cwT seed  42: 25 rungs, best.pt (ep 48580) return -16.993
+  A2cwT seed 128: 25 rungs, best.pt (ep 48811) return -17.937
+  A2cwT seed 456: 25 rungs, best.pt (ep 49493) return -17.986
+  A2cwT seed 789: 25 rungs, best.pt (ep 49679) return -18.077
+
+==============================================================================
+MATCHED PAIRS  (treatment checkpoint chosen on held-out return alone, ascending branch)
+==============================================================================
+
+  A1 vs A0
+    seed  42: A0 best.pt  -27.707  vs  A1   ep4000  -28.157  | gap -0.449 OK
+    seed 128: A0 best.pt  -28.807  vs  A1   ep4000  -27.846  | gap +0.961 OK
+    seed 456: A0 best.pt  -28.869  vs  A1   ep4000  -27.642  | gap +1.226 OUT OF TOLERANCE (kept in the mean)
+    seed 789: A0 best.pt  -27.822  vs  A1   ep4000  -27.591  | gap +0.231 OK
+
+  A1r vs A1
+    seed  42: A1 best.pt  -18.895  vs  A1r  ep18000  -18.482  | gap +0.414 OK
+    seed 128: A1 best.pt  -17.399  vs  A1r  ep46000  -17.399  | gap +0.000 OK
+    seed 456: A1 best.pt  -17.377  vs  A1r  ep42000  -17.946  | gap -0.569 OK
+    seed 789: A1 best.pt  -18.673  vs  A1r  ep30000  -18.702  | gap -0.029 OK
+
+  A2w vs A0
+    seed  42: A0 best.pt  -27.707  vs  A2w  ep12000  -28.788  | gap -1.081 OUT OF TOLERANCE (kept in the mean)
+    seed 128: A0 best.pt  -28.807  vs  A2w  ep16000  -28.682  | gap +0.125 OK
+    seed 456: A0 best.pt  -28.869  vs  A2w  ep16000  -29.231  | gap -0.363 OK
+    seed 789: A0 best.pt  -27.822  vs  A2w     best  -28.939  | gap -1.118 OUT OF TOLERANCE (kept in the mean)
+
+  A2cw vs A2w
+    seed  42: A2w best.pt  -29.461  vs  A2cw     best  -29.421  | gap +0.040 OK
+    seed 128: A2w best.pt  -29.999  vs  A2cw  ep12000  -29.896  | gap +0.103 OK
+    seed 456: A2w best.pt  -29.740  vs  A2cw  ep10000  -29.277  | gap +0.463 OK
+    seed 789: A2w best.pt  -28.939  vs  A2cw   ep8000  -28.424  | gap +0.515 OK
+
+  A2cwT vs A2w
+    seed  42: A2w best.pt  -29.461  vs  A2cwT   ep6000  -29.922  | gap -0.461 OK
+    seed 128: A2w best.pt  -29.999  vs  A2cwT   ep6000  -30.230  | gap -0.231 OK
+    seed 456: A2w best.pt  -29.740  vs  A2cwT   ep8000  -29.631  | gap +0.108 OK
+    seed 789: A2w best.pt  -28.939  vs  A2cwT   ep8000  -28.958  | gap -0.019 OK
+
+==============================================================================
+ENTROPY MATRIX  (stochastic pass)  -- how random each agent is
+  cell = mean paired difference, treatment - control, over seeds   (t(3))   * = |t| >= 3.18
+==============================================================================
+  row                    ACTION [nats]     TRAJECTORY [bits]          ARENA [bits]
+  A1 vs A0          +22.1118 (+29.43)*     +0.0028 ( +0.84)      +0.0061 ( +2.78) 
+  A1r vs A1          +1.9787 ( +1.12)      +0.0007 ( +0.45)      +0.0037 ( +0.96) 
+  A2w vs A0          -1.2236 ( -4.33)*     -0.0059 ( -1.68)      -0.0167 ( -3.38)*
+  A2cw vs A2w        +1.1701 ( +3.13)      +0.0076 ( +2.21)      +0.0226 ( +3.65)*
+  A2cwT vs A2w       +2.5278 ( +4.00)*     +0.0068 ( +2.99)      +0.0133 ( +2.23) 
+
+==============================================================================
+DIVERSITY MATRIX  (deterministic pass)  -- how differently agents behave
+  cell = mean paired difference, treatment - control, over seeds   (t(3))   * = |t| >= 3.18
+==============================================================================
+  row                   ACTION [force]     TRAJECTORY [bits]          ARENA [bits]
+  A1 vs A0           -0.0250 ( -2.17)      +0.0081 ( +0.66)      +0.0026 ( +0.45) 
+  A1r vs A1          -0.0006 ( -0.02)      +0.0016 ( +0.42)      +0.0221 ( +2.82) 
+  A2w vs A0          -0.0346 ( -2.12)      +0.0065 ( +0.43)      -0.0128 ( -3.31)*
+  A2cw vs A2w        +0.0691 ( +4.08)*     +0.0375 ( +2.37)      +0.0126 ( +1.19) 
+  A2cwT vs A2w       +0.0074 ( +0.70)      -0.0168 ( -4.60)*     -0.0019 ( -0.14) 
+
+  Seeds with a positive difference (out of 4):
+    A1 vs A0      ent_action: 4  ent_trajectory: 3  ent_arena: 3  div_action: 1  div_trajectory: 2  div_arena: 2
+    A1r vs A1     ent_action: 2  ent_trajectory: 3  ent_arena: 3  div_action: 2  div_trajectory: 2  div_arena: 4
+    A2w vs A0     ent_action: 0  ent_trajectory: 0  ent_arena: 0  div_action: 1  div_trajectory: 3  div_arena: 0
+    A2cw vs A2w   ent_action: 4  ent_trajectory: 3  ent_arena: 4  div_action: 4  div_trajectory: 4  div_arena: 3
+    A2cwT vs A2w  ent_action: 4  ent_trajectory: 4  ent_arena: 3  div_action: 2  div_trajectory: 0  div_arena: 3
+
+==============================================================================
+ABSOLUTE LEVELS  (control -> matched treatment, mean over seeds)
+==============================================================================
+  A1 vs A0
+    ent_action         -26.1780 ->    -4.0663
+    ent_trajectory       0.0908 ->     0.0937
+    ent_arena            0.2088 ->     0.2149
+    div_action           0.3393 ->     0.3143
+    div_trajectory       1.2203 ->     1.2284
+    div_arena            1.4534 ->     1.4560
+    sigma                0.0067 ->     0.7062
+    null traj (bits)     0.2069 ->     0.2083      null arena (bits) 0.3108 -> 0.3103
+  A1r vs A1
+    ent_action          -9.8484 ->    -7.8697
+    ent_trajectory       0.0756 ->     0.0762
+    ent_arena            0.1933 ->     0.1970
+    div_action           0.3649 ->     0.3643
+    div_trajectory       1.3630 ->     1.3646
+    div_arena            1.4179 ->     1.4400
+    sigma                0.4985 ->     0.5629
+    null traj (bits)     0.2314 ->     0.2297      null arena (bits) 0.2951 -> 0.3017
+  A2w vs A0
+    ent_action         -26.1780 ->   -27.4017
+    ent_trajectory       0.0908 ->     0.0849
+    ent_arena            0.2088 ->     0.1921
+    div_action           0.3393 ->     0.3047
+    div_trajectory       1.2203 ->     1.2268
+    div_arena            1.4534 ->     1.4407
+    sigma                0.0067 ->     0.0067
+    null traj (bits)     0.2075 ->     0.2071      null arena (bits) 0.3115 -> 0.3024
+  A2cw vs A2w
+    ent_action         -26.7337 ->   -25.5636
+    ent_trajectory       0.0893 ->     0.0968
+    ent_arena            0.1963 ->     0.2189
+    div_action           0.3019 ->     0.3710
+    div_trajectory       1.2087 ->     1.2462
+    div_arena            1.4443 ->     1.4569
+    sigma                0.0067 ->     0.0068
+    null traj (bits)     0.2043 ->     0.2131      null arena (bits) 0.3043 -> 0.3168
+  A2cwT vs A2w
+    ent_action         -26.7337 ->   -24.2059
+    ent_trajectory       0.0893 ->     0.0960
+    ent_arena            0.1963 ->     0.2096
+    div_action           0.3019 ->     0.3093
+    div_trajectory       1.2087 ->     1.1920
+    div_arena            1.4443 ->     1.4424
+    sigma                0.0067 ->     0.0067
+    null traj (bits)     0.2042 ->     0.2028      null arena (bits) 0.3058 -> 0.3094
+
+==============================================================================
+CHECK AGAINST PUBLISHED MATCHED-RETURN RESULTS
+==============================================================================
+  A1 vs A0       windowed D +0.0081 (t +0.66)   old D +0.0127 (t +1.72)  [published +0.0127, t +1.72]
+  A1r vs A1      windowed D +0.0016 (t +0.42)   old D +0.0043 (t +1.31)  [published +0.0043, t +1.31]
+  A2w vs A0      windowed D +0.0065 (t +0.43)  [published +0.0065, t +0.43]   old D +0.0223 (t +1.52)
+  A2cw vs A2w    windowed D +0.0375 (t +2.37)  [published +0.0375, t +2.37]   old D +0.0212 (t +2.28)
+  A2cwT vs A2w   windowed D -0.0168 (t -4.60)   old D -0.0348 (t -3.86)
+  Small differences mean the match picked a different checkpoint for some seed;
+  the MATCHED PAIRS table above shows which.
+
+Saved -> /sessions/rcw-01e5nnr9pvtxwzcyjpvdzcgg/mnt/baseline_fixed/results/propagation_matrix/ (report.txt, matrix.npz, matrix.csv)
+Saved -> /sessions/rcw-01e5nnr9pvtxwzcyjpvdzcgg/mnt/baseline_fixed/results/propagation_matrix/heatmap.png
