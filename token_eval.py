@@ -1,3 +1,5 @@
+# Evaluate token diversity D of trained policies on held-out layouts.
+
 import os
 import argparse
 import numpy as np
@@ -10,6 +12,7 @@ from token_diversity import (
 )
 
 
+# Run the policy on every layout; collect D, its chance level and rewards.
 def run(env, maddpg, layout_seeds, deterministic, repeats, torch_seed,
         n_perm):
     torch.manual_seed(torch_seed)
@@ -51,6 +54,7 @@ def run(env, maddpg, layout_seeds, deterministic, repeats, torch_seed,
             np.array(rewards), np.array(counts))
 
 
+# Evaluate each condition and print the results.
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--conditions", nargs="+", required=True,

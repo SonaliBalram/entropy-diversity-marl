@@ -1,8 +1,12 @@
+# Replay buffer of past transitions for off-policy training.
+
 import numpy as np
 import torch
 
 
+# Fixed-size buffer storing transitions with one team reward per step.
 class ReplayBuffer:
+    # Allocate the storage arrays.
     def __init__(
         self,
         capacity,
@@ -61,6 +65,7 @@ class ReplayBuffer:
             self.contexts = None
             self.next_contexts = None
 
+    # Store one transition, overwriting the oldest when full.
     def add(
         self,
         observation,
@@ -108,6 +113,7 @@ class ReplayBuffer:
             self.capacity
         )
 
+    # Sample a random batch of transitions, with replacement.
     def sample(
         self,
         batch_size,
@@ -155,5 +161,6 @@ class ReplayBuffer:
             to_t(dones)
         )
 
+    # Number of transitions currently stored.
     def __len__(self):
         return self.size

@@ -1,9 +1,12 @@
+# Quick look at one training run: how each behaviour metric correlates with reward.
+
 import argparse
 import os
 
 import numpy as np
 
 
+# Load one run's logs and print the correlations.
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--results", type=str,
@@ -31,6 +34,7 @@ def main():
     print(f"{n} episodes ({len(r)} after burn-in of {lo})")
     print("=" * 68)
 
+    # Print the correlation of one metric with reward.
     def rep(name, x):
         ok = np.isfinite(x) & np.isfinite(r)
         if ok.sum() < 3:

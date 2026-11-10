@@ -1,3 +1,5 @@
+# Per-step diversity metrics: how differently agents act at the same moment.
+
 import itertools
 
 import numpy as np
@@ -5,7 +7,9 @@ import numpy as np
 from action_utils import to_force, safe_cosine
 
 
+# Pairwise cosine and Euclidean distances between agents' actions.
 class InstantaneousBehaviourMetrics:
+    # Set up the agent pairs and empty stores.
     def __init__(self, n_agents=3):
         self.n_agents = n_agents
 
@@ -15,6 +19,7 @@ class InstantaneousBehaviourMetrics:
 
         self.reset()
 
+    # Record one step's actions for every agent pair.
     def record(self, actions):
         actions = np.asarray(actions, dtype=np.float64)
 
@@ -45,6 +50,7 @@ class InstantaneousBehaviourMetrics:
                 float(np.linalg.norm(actions[i] - actions[j]))
             )
 
+    # Average each metric over the episode, per pair and overall.
     def get_episode_results(self):
         results = {}
 
@@ -73,6 +79,7 @@ class InstantaneousBehaviourMetrics:
 
         return results
 
+    # Clear the stores for a new episode.
     def reset(self):
         keys = [f"{i + 1}{j + 1}" for (i, j) in self.pairs]
 

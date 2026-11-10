@@ -1,3 +1,5 @@
+# Plot training curves for any set of arms from the saved .npy arrays.
+
 import argparse
 import json
 import os
@@ -42,6 +44,7 @@ METRICS = [
 ]
 
 
+# Binned curve for each seed of one arm, or None if no data.
 def load_arm(arm, seeds, fname, kind, n_bins, bin_eps, alpha):
     rows = []
     for s in seeds:
@@ -73,6 +76,7 @@ def load_arm(arm, seeds, fname, kind, n_bins, bin_eps, alpha):
     return np.array(rows) if rows else None
 
 
+# Draw the mean curve for each arm on one panel.
 def draw(ax, centres, data, arms, title, ylabel, ref=None):
     for arm, y in data.items():
         m = np.nanmean(y, axis=0)
@@ -94,6 +98,7 @@ def draw(ax, centres, data, arms, title, ylabel, ref=None):
         matplotlib.ticker.FuncFormatter(lambda v, _: f"{v/1000:.0f}k"))
 
 
+# Make the plots and save them.
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--arms", nargs="+",

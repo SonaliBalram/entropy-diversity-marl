@@ -1,3 +1,5 @@
+# Trajectory-level diversity: how correlated agents' actions are over an episode.
+
 import itertools
 
 import numpy as np
@@ -5,7 +7,9 @@ import numpy as np
 from action_utils import to_force
 
 
+# Correlation between agents' action time series within an episode.
 class TemporalBehaviourMetrics:
+    # Set up the agent pairs.
     def __init__(self, n_agents, action_dim=5, use_force=True):
         self.n_agents = n_agents
         self.action_dim = action_dim
@@ -17,6 +21,7 @@ class TemporalBehaviourMetrics:
 
         self.actions = []
 
+    # Store one step's actions.
     def record(self, actions):
         actions = np.asarray(actions, dtype=np.float64)
 
@@ -29,6 +34,7 @@ class TemporalBehaviourMetrics:
 
         self.actions.append(actions.copy())
 
+    # Pairwise correlations over the whole episode.
     def get_episode_results(self):
         if len(self.actions) < 3:
             raise ValueError(
@@ -81,5 +87,6 @@ class TemporalBehaviourMetrics:
 
         return results
 
+    # Clear the stored actions for a new episode.
     def reset(self):
         self.actions = []

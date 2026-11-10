@@ -1,3 +1,5 @@
+# Main Experiment 3 outcome: diversity difference between two arms at matched return.
+
 import os
 import re
 import argparse
@@ -12,6 +14,7 @@ from token_diversity import (
 )
 
 
+# Run one checkpoint on the held-out layouts; return reward and D per layout.
 def evaluate_checkpoint(path, layout_seeds, n_agents, max_cycles,
                         n_perm, torch_seed):
     checkpoint = torch.load(path, map_location="cpu", weights_only=False)
@@ -84,6 +87,7 @@ def evaluate_checkpoint(path, layout_seeds, n_agents, max_cycles,
     )
 
 
+# Every checkpoint in a seed folder, in episode order.
 def ladder(root, seed):
     d = os.path.join(root, f"seed_{seed}")
     items = []
@@ -94,12 +98,14 @@ def ladder(root, seed):
     return sorted(items)
 
 
+# Slope of D against return across layouts, within a single policy.
 def within_policy_slope(res):
     b = np.polyfit(res["per_layout_return"], res["per_layout_D"], 1)[0]
     r = np.corrcoef(res["per_layout_return"], res["per_layout_D"])[0, 1]
     return float(b), float(r)
 
 
+# Compare control and treatment and print the result.
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--control", required=True, help="label:checkpoint_root")

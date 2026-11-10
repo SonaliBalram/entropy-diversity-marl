@@ -1,3 +1,5 @@
+# Ownership gate for A1r: sets each agent's entropy weight from its Voronoi margins.
+
 import math
 
 import os as _os
@@ -24,6 +26,7 @@ LN10 = math.log(10.0)
 MODES = ("both", "ownership", "landmark")
 
 
+# The two margins (ownership and landmark) from each agent's own observation.
 def gaps(obs):
     o = torch.as_tensor(obs)
     lead = o.shape[:-1]
@@ -46,6 +49,7 @@ def gaps(obs):
     return m, g
 
 
+# Combine the two margins into the single gap G the gate acts on.
 def combined_gap(m, g, mode="both"):
     if mode == "both":
         return torch.maximum(g, -m)
@@ -56,10 +60,12 @@ def combined_gap(m, g, mode="both"):
     raise ValueError(f"mode must be one of {MODES}, got {mode!r}")
 
 
+# log of the gate weight, log sigmoid(G / kappa).
 def log_weight(G, kappa):
     return F.logsigmoid(torch.as_tensor(G) / kappa)
 
 
+# Choose kappa so the entropy weight spans the target number of decades.
 def fit_kappa(G_ref, decades=1.0, q_lo=0.10, q_hi=0.90):
     g = torch.as_tensor(np.asarray(G_ref, dtype=np.float64)).flatten()
     lo = torch.quantile(g, q_lo).item()
@@ -74,6 +80,7 @@ def fit_kappa(G_ref, decades=1.0, q_lo=0.10, q_hi=0.90):
 
     target = decades * LN10
 
+    # Spread in log weight between the two reference quantiles for a given kappa.
     def spread(k):
         t = torch.tensor([hi / k, lo / k], dtype=torch.float64)
         lw = F.logsigmoid(t)
@@ -90,12 +97,15 @@ def fit_kappa(G_ref, decades=1.0, q_lo=0.10, q_hi=0.90):
     return math.sqrt(k_lo * k_hi)
 
 
+# Normaliser log Z, so the average weight on the reference set equals alpha.
 def fit_log_z(G_ref, kappa):
     g = torch.as_tensor(np.asarray(G_ref, dtype=np.float64)).flatten()
     return float(log_weight(g, kappa).mean())
 
 
+# Turns a batch of observations into per-agent entropy weights alpha_eff.
 class OwnershipGate:
+    # Check and store the frozen gate constants.
     def __init__(self, alpha, kappa, log_z,
                  mode="both", clamp_ratio=10.0):
         if mode not in MODES:
@@ -113,6 +123,7 @@ class OwnershipGate:
                             else float(clamp_ratio))
         self._log_alpha = math.log(self.alpha)
 
+    # Per-agent entropy weights for a batch, clamped around alpha.
     def __call__(self, obs):
         with torch.no_grad():
             m, g = gaps(obs)
@@ -124,6 +135,7 @@ class OwnershipGate:
                             self.alpha * self.clamp_ratio)
         return a.detach()
 
+    # Average weight and spread, to check the frozen constants still hold.
     def diagnostics(self, obs):
         with torch.no_grad():
             m, g = gaps(obs)
@@ -157,15 +169,18 @@ class OwnershipGate:
                 ) if self.clamp_ratio is not None else 0.0,
             }
 
+    # Gate constants as a dict, for saving.
     def to_dict(self):
         return {"alpha": self.alpha, "kappa": self.kappa,
                 "log_z": self.log_z, "mode": self.mode,
                 "clamp_ratio": self.clamp_ratio}
 
+    # Rebuild a gate from saved constants.
     @classmethod
     def from_dict(cls, d):
         return cls(**d)
 
+    # Freeze kappa and log Z from a reference set of observations.
     @classmethod
     def fit(cls, obs_ref, alpha, mode="both", decades=1.0,
             clamp_ratio=10.0):
@@ -177,12 +192,14 @@ class OwnershipGate:
         return cls(alpha, kappa, log_z, mode=mode,
                    clamp_ratio=clamp_ratio)
 
+    # Readable summary of the gate.
     def __repr__(self):
         return (f"OwnershipGate(alpha={self.alpha:g}, "
                 f"kappa={self.kappa:.6g}, log_z={self.log_z:.6g}, "
                 f"mode={self.mode!r}, clamp_ratio={self.clamp_ratio})")
 
 
+# Build simple_spread-style observations from known positions, for the self-test.
 def synthetic_observations(positions, landmarks):
     positions = np.asarray(positions, dtype=np.float64)
     landmarks = np.asarray(landmarks, dtype=np.float64)
@@ -199,6 +216,7 @@ def synthetic_observations(positions, landmarks):
     return obs
 
 
+# Compute the margins slowly from global positions, to check gaps().
 def brute_force(positions, landmarks):
     positions = np.asarray(positions, dtype=np.float64)
     landmarks = np.asarray(landmarks, dtype=np.float64)
@@ -222,10 +240,12 @@ def brute_force(positions, landmarks):
     return m, g, delta
 
 
+# Check the gate against brute-force answers on synthetic data.
 def _self_test():
     rng = np.random.default_rng(20260922)
     ok = True
 
+    # Print PASS or FAIL for one check.
     def check(name, cond, detail=""):
         nonlocal ok
         ok = ok and bool(cond)

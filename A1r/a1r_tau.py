@@ -1,3 +1,5 @@
+# A1r tracking coefficient tau: how far the policy's spread follows the gate.
+
 import os
 import sys
 import json
@@ -17,6 +19,7 @@ from voronoi_gate import gaps, combined_gap, OwnershipGate
 from a1r_pilot import collect, ols
 
 
+# (1/2) log alpha_eff from the gap G, with the same clamp the gate uses.
 def half_log_alpha(G, alpha, kappa, log_z, clamp_ratio):
     G = torch.as_tensor(np.asarray(G, dtype=np.float64))
     log_a = (np.log(alpha)
@@ -27,10 +30,12 @@ def half_log_alpha(G, alpha, kappa, log_z, clamp_ratio):
     return 0.5 * log_a
 
 
+# The same without the clamp, as originally pre-registered.
 def half_log_alpha_unclamped(G, alpha, kappa, log_z):
     return half_log_alpha(G, alpha, kappa, log_z, None)
 
 
+# Load a trained learner from a checkpoint.
 def load_system(ckpt):
     c = torch.load(ckpt, map_location="cpu", weights_only=False)
     maddpg = MADDPGSystem(
@@ -48,6 +53,7 @@ def load_system(ckpt):
     return maddpg
 
 
+# Compute tau for each seed and write the report.
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpt-root", default="checkpoints/a1r_both")
@@ -76,6 +82,7 @@ def main():
     arm = os.path.basename(args.ckpt_root.rstrip("/"))
     lines = []
 
+    # Print a line and keep it for the report.
     def say(s=""):
         print(s); lines.append(s)
 

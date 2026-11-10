@@ -1,3 +1,5 @@
+# Experiment 2 (A1): MADDPG with a policy-entropy bonus of weight alpha.
+
 import os
 import sys
 import time
@@ -9,6 +11,7 @@ import numpy as np
 import torch
 
 
+# Let this script import modules from the project root.
 PROJECT_ROOT = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
 )
@@ -24,6 +27,7 @@ from temporal_behaviour import TemporalBehaviourMetrics
 from policy_divergence_behaviour import PolicyDivergenceMetrics
 
 
+# Command-line options.
 parser = argparse.ArgumentParser()
 parser.add_argument("--seed", type=int, default=42)
 parser.add_argument("--episodes", type=int, default=50000)
@@ -40,6 +44,7 @@ parser.add_argument("--alpha", type=float, required=True,
                          "For alpha = 0 use train_baseline.py instead.")
 args = parser.parse_args()
 
+# Experiment 2 needs a positive entropy weight.
 if args.alpha <= 0.0:
     raise SystemExit(
         f"--alpha must be > 0 for Experiment 2 (received {args.alpha}). "
@@ -49,6 +54,7 @@ if args.alpha <= 0.0:
 SEED = args.seed
 
 
+# Seed every random number generator so runs are reproducible.
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -60,6 +66,7 @@ def set_seed(seed):
 set_seed(SEED)
 
 
+# Environment, network and training settings.
 N_AGENTS = 3
 OBSERVATION_DIM = 18
 ACTION_DIM = 5
@@ -95,6 +102,7 @@ os.makedirs(RESULTS_DIR, exist_ok=True)
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
 
+# Create the environment, learner, replay buffer and behaviour metrics.
 env = MPEEnvironment(n_agents=N_AGENTS, max_cycles=MAX_CYCLES)
 
 maddpg = MADDPGSystem(
@@ -129,6 +137,7 @@ divergence_metrics = PolicyDivergenceMetrics(N_AGENTS, ACTION_DIM)
 action_rng = np.random.default_rng(SEED)
 
 
+# Lists that collect the training logs.
 episode_rewards = []
 episode_discounted = []
 episode_value_avg = []
@@ -154,6 +163,7 @@ best_episode = -1
 BEST_BURN_IN = 2000
 
 
+# Run settings stored inside every saved checkpoint.
 CHECKPOINT_METADATA = {
     "seed": SEED,
     "n_agents": N_AGENTS,
@@ -200,6 +210,7 @@ print("-" * 64)
 
 start_time = time.time()
 
+# Main training loop, one episode at a time.
 for episode in range(NUM_EPISODES):
     episode_seed = SEED * 1_000_000 + episode
 
@@ -213,6 +224,7 @@ for episode in range(NUM_EPISODES):
         global_step += 1
         episode_steps += 1
 
+        # Random actions during warmup, then actions from the policy.
         if global_step < WARMUP_STEPS:
             actions = action_rng.random(
                 (N_AGENTS, ACTION_DIM)
@@ -220,6 +232,7 @@ for episode in range(NUM_EPISODES):
         else:
             actions = maddpg.act(observations, deterministic=False)
 
+        # Record this step for the behaviour metrics.
         instant_metrics.record(actions)
         temporal_metrics.record(actions)
 
@@ -251,6 +264,7 @@ for episode in range(NUM_EPISODES):
             and global_step >= WARMUP_STEPS
             and global_step % UPDATE_EVERY == 0
         ):
+            # One gradient update of the critics and actor from a replay sample.
             info_update = maddpg.update(
                 replay_buffer.sample(BATCH_SIZE)
             )
@@ -270,6 +284,7 @@ for episode in range(NUM_EPISODES):
 
     episode_rewards.append(episode_reward)
 
+    # Discounted return from each step, to compare with the critic's estimates.
     running = 0.0
     returns_to_go = np.empty(len(step_rewards), dtype=np.float64)
 
@@ -284,6 +299,7 @@ for episode in range(NUM_EPISODES):
     running_mean_rewards.append(float(np.mean(reward_window)))
     running_std_rewards.append(float(np.std(reward_window)))
 
+    # Collect this episode's behaviour metrics.
     record = {}
     record.update(instant_metrics.get_episode_results())
     record.update(temporal_metrics.get_episode_results())
@@ -294,6 +310,7 @@ for episode in range(NUM_EPISODES):
     temporal_metrics.reset()
     divergence_metrics.reset()
 
+    # Print a progress line.
     if (episode + 1) % args.print_every == 0 or episode == 0:
         line = (
             f"Episode {episode + 1:6d}"
@@ -329,6 +346,7 @@ for episode in range(NUM_EPISODES):
 
         print(line, flush=True)
 
+    # Save a periodic checkpoint.
     if (episode + 1) % args.checkpoint_every == 0:
         maddpg.save(
             os.path.join(
@@ -341,6 +359,7 @@ for episode in range(NUM_EPISODES):
         episode + 1 >= BEST_BURN_IN
         and running_mean_rewards[-1] > best_reward
     ):
+        # Save best.pt whenever the 100-episode average reward improves.
         best_reward = running_mean_rewards[-1]
         best_episode = episode + 1
         maddpg.save(
@@ -356,6 +375,7 @@ print(f"Total environment steps : {global_step:,}")
 print(f"Total gradient updates  : {update_count:,}")
 print(f"Wall clock              : {(time.time()-start_time)/3600:.2f} h")
 
+# Save all training logs to the results folder.
 arrays = {
     "episode_rewards": episode_rewards,
     "episode_discounted": episode_discounted,
@@ -386,6 +406,7 @@ np.savez(
     }
 )
 
+# Save the final model.
 MODEL_PATH = os.path.join(CHECKPOINT_DIR, "final.pt")
 
 maddpg.save(MODEL_PATH, metadata=CHECKPOINT_METADATA)

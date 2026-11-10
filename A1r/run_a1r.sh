@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
+# Train arm A1r (ownership-gated entropy) for all four seeds.
 
+# Stop if an unset variable is used.
 set -u
 
+# Run from the project root, one level above this script.
 cd "$(dirname "$0")/.."
 
+# Seeds, episode count and arm name for this sweep.
 SEEDS="42 128 456 789"
 EPISODES=50000
 GATE="both"
 ALPHA=0.01
 ARM="a1r_${GATE}"
 
+# Training options, matched to the other arms so results are comparable.
 FLAGS="--alpha ${ALPHA} --gate ${GATE} --episodes ${EPISODES} \
        --batch-size 256 --update-every 2 --checkpoint-every 2000"
 
+# Pre-flight: refuse to start if the Python environment is not ready.
 python3 - <<'PY' || exit 1
 import sys, os, json
 try:
@@ -53,14 +59,17 @@ echo "             train_a1r.py or maddpg_system_a1r.py has been touched)"
 echo "===================================================================="
 echo
 
+# Running summary and failure flag for the whole sweep.
 SUMMARY=""
 FAILED=0
 SWEEP_START=$(date +%s)
 
+# Train each seed in turn.
 for S in ${SEEDS}; do
     OUT="results/${ARM}/seed_${S}"
     LOG="A1r/${ARM}_seed${S}.log"
 
+    # Skip a seed whose results already exist.
     if [ -f "${OUT}/episode_rewards.npy" ]; then
         echo "[skip] seed ${S}: ${OUT}/episode_rewards.npy already exists"
         SUMMARY="${SUMMARY}
@@ -73,6 +82,7 @@ for S in ${SEEDS}; do
     echo "       $(date '+%H:%M:%S')"
     echo "--------------------------------------------------------------------"
 
+    # Start the log file with the command and machine details.
     T0=$(date +%s)
     {
         echo "# command : python3 A1r/train_a1r.py ${FLAGS} --seed ${S}"
@@ -81,12 +91,15 @@ for S in ${SEEDS}; do
         echo "#"
     } > "${LOG}"
 
+    # Train this seed, appending all output to its log.
     python3 A1r/train_a1r.py ${FLAGS} --seed "${S}" >> "${LOG}" 2>&1
     RC=$?
     T1=$(date +%s)
     HOURS=$(python3 -c "print(f'{($T1 - $T0)/3600:.2f}')")
 
+    # Report whether the seed finished successfully.
     if [ ${RC} -eq 0 ] && [ -f "${OUT}/episode_rewards.npy" ]; then
+        # Check the gate kept its entropy budget and spread.
         BUDGET=$(python3 -c "
 import numpy as np
 g = np.load('${OUT}/gate_geomeans.npy')
@@ -108,6 +121,7 @@ print(f'budget {np.exp(np.log(g).mean())/${ALPHA}:.3f}x alpha, '
     echo
 done
 
+# Print the summary and next steps.
 TOTAL=$(python3 -c "print(f'{($(date +%s) - $SWEEP_START)/3600:.2f}')")
 
 echo "===================================================================="

@@ -1,3 +1,5 @@
+# Self-tests for windowed_diversity.py.
+
 import numpy as np
 from windowed_diversity import (windowed_diversity, permutation_null_windowed,
                                 critic_context, critic_context_empty,
@@ -6,6 +8,7 @@ from windowed_diversity import (windowed_diversity, permutation_null_windowed,
 LOG2_3 = np.log2(3)
 
 
+# Reference value of windowed D, computed as a mutual information.
 def mi_reference(tokens, n_windows, n_landmarks=3):
     tokens = np.asarray(tokens)
     n_agents, T = tokens.shape
@@ -27,10 +30,12 @@ def mi_reference(tokens, n_windows, n_landmarks=3):
     return total
 
 
+# True if two numbers are equal within a tolerance.
 def close(a, b, tol=1e-9):
     return abs(a - b) < tol
 
 
+# Run every test case.
 def run():
     tokens = np.zeros((3, 25), dtype=int)
     d, dn, dw = windowed_diversity(tokens)

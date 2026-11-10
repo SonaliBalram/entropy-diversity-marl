@@ -1,6 +1,9 @@
+# Windowed token diversity: D measured within each of several windows of an episode.
+
 import numpy as np
 
 
+# Shannon entropy in bits, treating 0 log 0 as 0.
 def entropy_bits(p, axis=-1):
     p = np.asarray(p, dtype=float)
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -8,6 +11,7 @@ def entropy_bits(p, axis=-1):
     return terms.sum(axis=axis)
 
 
+# Fraction of each window each agent spent nearest each landmark.
 def window_frequencies(tokens, n_windows=5, n_landmarks=3):
     tokens = np.asarray(tokens)
     if tokens.ndim != 2:
@@ -24,6 +28,7 @@ def window_frequencies(tokens, n_windows=5, n_landmarks=3):
     return one_hot.mean(axis=2)
 
 
+# Average D over windows, its normalised value, and D per window.
 def windowed_diversity(tokens, n_windows=5, n_landmarks=3):
     f = window_frequencies(tokens, n_windows, n_landmarks)
 
@@ -37,6 +42,7 @@ def windowed_diversity(tokens, n_windows=5, n_landmarks=3):
     return d_win, d_win_norm, d_per_window
 
 
+# Chance level of windowed D, shuffling agents within each window.
 def permutation_null_windowed(tokens, n_windows=5, n_landmarks=3,
                               n_permutations=200, rng=None):
     rng = np.random.default_rng() if rng is None else rng
@@ -53,6 +59,7 @@ def permutation_null_windowed(tokens, n_windows=5, n_landmarks=3,
     return float(np.mean(vals))
 
 
+# The augmented critic's context after t steps.
 def critic_context(tokens_so_far, n_windows=5, n_landmarks=3, T=25):
     tokens_so_far = np.asarray(tokens_so_far, dtype=int)
     if tokens_so_far.ndim != 2 or tokens_so_far.shape[0] == 0:
@@ -73,10 +80,12 @@ def critic_context(tokens_so_far, n_windows=5, n_landmarks=3, T=25):
                            [(k + 1) / n_windows]])
 
 
+# The augmented critic's context at the start of an episode.
 def critic_context_empty(n_agents=3, n_windows=5, n_landmarks=3):
     return np.concatenate([np.zeros(n_agents * n_landmarks), [0.0], [1.0 / n_windows]])
 
 
+# Recompute the bonus from the final context, as a consistency check.
 def bonus_from_context(ctx, n_agents=3, n_windows=5, n_landmarks=3):
     f = ctx[:n_agents * n_landmarks].reshape(n_agents, n_landmarks)
     h_group = entropy_bits(f.mean(axis=0))

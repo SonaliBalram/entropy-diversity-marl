@@ -41,7 +41,6 @@ Run any script with `--help` to see all of its options.
 | `results/` | Evaluation and analysis outputs (per-episode training histories are not included, see below) |
 | `checkpoints/` | Only the `best.pt` model for each arm and seed |
 | `docs/` | Supporting notes |
-| `archive/` | Superseded files kept for the record (see `archive/README.md`) |
 
 ## Installation
 

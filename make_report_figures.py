@@ -1,3 +1,5 @@
+# Make every figure in Chapter 4 of the report.
+
 import os
 import re
 import sys
@@ -29,6 +31,7 @@ plt.rcParams.update({
 })
 
 
+# Save a figure as PDF and PNG.
 def save(fig, name):
     os.makedirs(OUT_DIR, exist_ok=True)
     fig.savefig(os.path.join(OUT_DIR, name + ".pdf"))
@@ -37,6 +40,7 @@ def save(fig, name):
     print(f"  wrote results/report_figures/{name}.pdf and .png")
 
 
+# Figure 4.0 (compact): the experimental logic as a flow diagram.
 def figure_4_0_compact():
     from matplotlib.patches import FancyBboxPatch
 
@@ -57,6 +61,7 @@ def figure_4_0_compact():
     ax.set_ylim(0, H)
     ax.axis("off")
 
+    # Draw a labelled box.
     def box(x0, x1, cy, h, text, role, size=7.5, ls="-", lw=1.0, r=0.06):
         fill, edge, color = ROLE[role]
         ax.add_patch(FancyBboxPatch((x0, cy - h / 2), x1 - x0, h,
@@ -65,6 +70,7 @@ def figure_4_0_compact():
         ax.text((x0 + x1) / 2, cy, text, ha="center", va="center", fontsize=size,
                 color=color, linespacing=1.25, zorder=3)
 
+    # Draw an arrow, solid if the path was taken.
     def arrow(x1, y1, x2, y2, taken=True):
         ax.annotate("", xy=(x2, y2), xytext=(x1, y1), zorder=1,
                     arrowprops=dict(arrowstyle="-|>", lw=1.5 if taken else 0.9,
@@ -137,6 +143,7 @@ def figure_4_0_compact():
     save(fig, "fig4_0_experimental_logic_compact")
 
 
+# Smoothed return and policy spread for each seed of one arm.
 def load_curves(arm, every=100, sigma_bin=250):
     out = []
     for s in SEEDS:
@@ -157,6 +164,7 @@ def load_curves(arm, every=100, sigma_bin=250):
     return out
 
 
+# Figure 4.1: learning curves for A0 and A1.
 def figure_4_1():
     fig, ax = plt.subplots(1, 2, figsize=(6.4, 2.6))
     for arm in ["baseline", "alpha_0.01"]:
@@ -188,6 +196,7 @@ def figure_4_1():
     save(fig, "fig4_1_learning_curves")
 
 
+# (episode, return, windowed D) for every cached baseline checkpoint.
 def baseline_ladder(seed):
     cache = os.path.join(PROJECT_ROOT, "results", "exp3_windowed", "block4_cache")
     pts = []
@@ -202,6 +211,7 @@ def baseline_ladder(seed):
     return np.array(sorted(pts))
 
 
+# Figure 4.2: baseline return against D for each seed.
 def figure_4_2():
     fig, ax = plt.subplots(1, 4, figsize=(6.4, 2.2), sharey=True)
     colour = COLOURS["baseline"]
@@ -225,6 +235,7 @@ def figure_4_2():
     save(fig, "fig4_2_baseline_hysteresis")
 
 
+# (episode, return, windowed D) for every cached A1 checkpoint.
 def a1_ladder(seed):
     cache = os.path.join(PROJECT_ROOT, "results", "propagation_matrix", "cache")
     pts = []
@@ -239,6 +250,7 @@ def a1_ladder(seed):
     return np.array(sorted(pts))
 
 
+# Figure 4.3: return against diversity for A0 and A1.
 def figure_4_3():
     fig, ax = plt.subplots(figsize=(4.2, 3.0))
     first = True
@@ -262,6 +274,7 @@ def figure_4_3():
     save(fig, "fig4_3_return_diversity_A0_A1")
 
 
+# (episode, return, windowed D) for every cached checkpoint of one arm.
 def block4_ladder(label, seed):
     cache = os.path.join(PROJECT_ROOT, "results", "exp3_windowed", "block4_cache")
     pts = []
@@ -276,6 +289,7 @@ def block4_ladder(label, seed):
     return np.array(sorted(pts))
 
 
+# Figure 4.4: A2w against the baseline.
 def figure_4_4():
     fig, ax = plt.subplots(1, 3, figsize=(6.6, 2.4), gridspec_kw=dict(width_ratios=[1.15, 1.15, 0.7]))
 
@@ -328,6 +342,7 @@ def figure_4_4():
 C_A2CW, C_A2CWT = "#8f6bd0", "#c2477e"
 
 
+# Mean of a per-update series in bins of training episodes.
 def binned_by_episode(values, update_steps, n_episodes, width=500):
     ep = np.asarray(update_steps) / STEPS_PER_EPISODE
     edges = np.arange(0, n_episodes + 1, width)
@@ -338,6 +353,7 @@ def binned_by_episode(values, update_steps, n_episodes, width=500):
     return edges[1:] - width / 2, out
 
 
+# Critic's estimate minus the actual return, binned over training.
 def critic_error(arm, width=500):
     runs = []
     for s in SEEDS:
@@ -352,6 +368,7 @@ def critic_error(arm, width=500):
     return x, np.array(runs)
 
 
+# Figure 4.5: A2cw against A2w.
 def figure_4_5():
     arms = [("beta_3_w5", "A2w", "A2w", COLOURS["beta_3_w5"]),
             ("beta_3_w5_augcritic_term", "A2cwT", "A2cw", C_A2CWT)]
@@ -408,6 +425,7 @@ def figure_4_5():
     save(fig, "fig4_5_a2cw")
 
 
+# Figure 4.0: the experimental logic as a flow diagram.
 def figure_4_0():
     from matplotlib.patches import FancyBboxPatch, Patch
     from matplotlib.lines import Line2D
@@ -429,6 +447,7 @@ def figure_4_0():
     ax.set_ylim(-4.7, 19.1)
     ax.axis("off")
 
+    # Draw a labelled box.
     def box(cx, cy, w, h, text, role, size=8.5, ls="-", lw=1.1, round_=0.15):
         fill, edge, color = ROLE[role]
         ax.add_patch(FancyBboxPatch((cx - w / 2, cy - h / 2), w, h,
@@ -437,6 +456,7 @@ def figure_4_0():
         ax.text(cx, cy, text, ha="center", va="center", fontsize=size, color=color,
                 linespacing=1.35, zorder=3)
 
+    # Draw an arrow, solid if the path was taken.
     def arrow(x1, y1, x2, y2, taken=True, color=None):
         c = color or (INK if taken else GREY)
         ax.annotate("", xy=(x2, y2), xytext=(x1, y1), zorder=1,
@@ -444,10 +464,12 @@ def figure_4_0():
                                     ls="-" if taken else (0, (3, 2)),
                                     shrinkA=0, shrinkB=0, mutation_scale=10))
 
+    # Draw a line, solid if the path was taken.
     def line(xs, ys, taken=True):
         ax.plot(xs, ys, color=INK if taken else GREY, lw=1.7 if taken else 1.0,
                 ls="-" if taken else (0, (3, 2)), solid_capstyle="butt", zorder=1)
 
+    # Write a label next to a path.
     def label(x, y, text, taken):
         ax.text(x, y, text, fontsize=8, va="center", zorder=3,
                 color=INK if taken else "#97C459", fontweight="bold" if taken else "normal")
@@ -468,6 +490,7 @@ def figure_4_0():
 
     STEP = 4.8
 
+    # Draw one stage: an arm, its question and the yes / no paths.
     def stage(y_box, arm_text, role, q_text, yes_text, no_text):
         box(SPINE, y_box, AW, AH, arm_text, role)
         line([SPINE, SPINE], [y_box - AH / 2, y_box - 0.9])
@@ -528,6 +551,7 @@ def figure_4_0():
     save(fig, "fig4_0_experimental_logic")
 
 
+# Make all the figures.
 def main():
     print("Chapter 4 figures")
     figure_4_0()

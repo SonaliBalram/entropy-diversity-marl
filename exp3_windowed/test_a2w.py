@@ -1,3 +1,5 @@
+# Pre-launch checks for train_a2w.py, run in a temporary copy of the project.
+
 import os
 import sys
 import tempfile
@@ -14,6 +16,7 @@ SKIP = {"results", "checkpoints", "logs", ".git", ".venv", "archive", ".reductio
 COMMON = ["--seed", "42", "--print-every", "100000"]
 
 
+# Build a temporary copy of the project from symlinks.
 def make_mirror():
     m = tempfile.mkdtemp(prefix="a2w_test_")
     for name in os.listdir(ROOT):
@@ -24,6 +27,7 @@ def make_mirror():
     return m
 
 
+# Run a short training job in the mirror.
 def run(mirror, script, extra):
     cmd = [sys.executable, script] + COMMON + extra
     print("  running:", " ".join(cmd[1:]), flush=True)
@@ -33,10 +37,12 @@ def run(mirror, script, extra):
         raise SystemExit(f"  FAILED TO RUN: {script}")
 
 
+# Load one saved array from the mirror's results.
 def load(mirror, exp, name):
     return np.load(os.path.join(mirror, "results", exp, "seed_42", name + ".npy"))
 
 
+# Run every check and print PASS or FAIL.
 def main():
     mirror = make_mirror()
     print(f"Mirror folder (throwaway): {mirror}\n")

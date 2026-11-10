@@ -1,10 +1,14 @@
+# Shared stochastic actor network used by every agent.
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal
  
  
+# Gaussian policy network shared by all agents.
 class SharedContinuousActor(nn.Module):
+    # Build the network layers.
     def __init__(
         self,
         observation_dim,
@@ -34,6 +38,7 @@ class SharedContinuousActor(nn.Module):
         self.LOG_STD_MIN = -5
         self.LOG_STD_MAX = 2
  
+    # Gaussian action distribution for a batch of observations.
     def get_distribution(self, observations):
         features = self.network(observations)
  
@@ -53,6 +58,7 @@ class SharedContinuousActor(nn.Module):
  
         return distribution
  
+    # Sample stochastic actions and their log-probabilities.
     def sample_action(self, observations):
         distribution = self.get_distribution(
             observations
@@ -90,6 +96,7 @@ class SharedContinuousActor(nn.Module):
             entropy_samples
         )
  
+    # Return the mean action, with no sampling.
     def deterministic_action(self, observations):
         distribution = self.get_distribution(
             observations
@@ -100,9 +107,11 @@ class SharedContinuousActor(nn.Module):
  
         return actions
  
+    # Default forward pass: sample actions.
     def forward(self, observations):
         return self.sample_action(observations)
  
+    # Summary statistics of the policy, used only for logging.
     def policy_stats(self, observations):
         with torch.no_grad():
             distribution = self.get_distribution(observations)

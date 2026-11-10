@@ -1,7 +1,11 @@
+# Centralised critic network.
+
 import torch
 import torch.nn as nn
 
+# Q-network that sees all agents' observations and actions.
 class CentralizedCritic(nn.Module):
+    # Build the network layers.
     def __init__(
         self,
         n_agents,
@@ -53,6 +57,7 @@ class CentralizedCritic(nn.Module):
             )
         )
 
+    # Estimate Q from all observations, all actions and an optional context.
     def forward(
         self,
         observations,

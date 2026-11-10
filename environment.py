@@ -1,9 +1,13 @@
+# Wrapper around MPE simple_spread_v3 with the custom team reward used in every experiment.
+
 import numpy as np
 
 from mpe2 import simple_spread_v3
 
 
+# Cooperative Navigation environment returning stacked arrays and one shared team reward.
 class MPEEnvironment:
+    # Create the underlying MPE environment.
     def __init__(
         self,
         n_agents=3,
@@ -37,6 +41,7 @@ class MPEEnvironment:
 
         self._episode_over = True
 
+    # Start a new episode and return the observations as one array.
     def reset(self, seed=None):
         observations, infos = self.env.reset(
             seed=seed
@@ -50,6 +55,7 @@ class MPEEnvironment:
 
         return observations
 
+    # Apply all agents' actions; returns observations, team reward, terminated, truncated, info.
     def step(self, actions):
         if self._episode_over:
             raise RuntimeError(
@@ -102,6 +108,7 @@ class MPEEnvironment:
             infos
         )
 
+    # Team reward: minus each landmark's distance to its nearest agent, minus a collision penalty.
     def _calculate_reward(self):
         world = self.env.unwrapped.world
 
@@ -155,6 +162,7 @@ class MPEEnvironment:
 
         return float(total_reward)
 
+    # Stack the per-agent observation dict into a [n_agents, obs_dim] array.
     def _observations_to_array(
         self,
         observations
@@ -166,5 +174,6 @@ class MPEEnvironment:
             ]
         ).astype(np.float32)
 
+    # Close the underlying environment.
     def close(self):
         self.env.close()

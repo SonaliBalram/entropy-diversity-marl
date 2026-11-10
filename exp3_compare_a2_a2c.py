@@ -1,3 +1,5 @@
+# Paired comparison of arms A2 and A2c across seeds.
+
 import numpy as np, os
 
 S = [42, 128, 456, 789]
@@ -6,19 +8,23 @@ CACHE = "results/exp3_ladder_cache"
 W = 72
 
 
+# Load one saved array for an arm and seed.
 def arr(arm, seed, name):
     return np.load(f"results/{arm}/seed_{seed}/{name}")
 
 
+# Load one behaviour metric for an arm and seed.
 def beh(arm, seed, key):
     return np.load(f"results/{arm}/seed_{seed}/behaviour_history.npz")[key]
 
 
+# Mean of the last fraction of a series.
 def tail(x, frac=0.25):
     x = np.asarray(x, float)
     return np.nanmean(x[int((1 - frac) * len(x)):])
 
 
+# Mean, spread and t-statistic of the paired difference b - a across seeds.
 def paired(a, b):
     d = np.asarray(b, float) - np.asarray(a, float)
     sd = d.std(ddof=1)
@@ -26,6 +32,7 @@ def paired(a, b):
     return d.mean(), sd, (d.mean() / se if se > 0 else np.nan)
 
 
+# Print one row of the comparison table.
 def line(label, a, b, fmt="{:9.4f}", note=""):
     m, sd, t = paired(a, b)
     print(f"  {label:32s} " + fmt.format(np.mean(a)) + " " +
@@ -33,6 +40,7 @@ def line(label, a, b, fmt="{:9.4f}", note=""):
           f"{m:+8.4f} +/- {sd:6.4f}  t={t:+6.2f}  {note}")
 
 
+# Print a table header.
 def header(title):
     print()
     print("-" * W)
@@ -41,6 +49,7 @@ def header(title):
     print(f"  {'quantity':32s} {'A2':>9s} {'A2c':>9s}  {'A2c - A2 (paired)':>28s}")
 
 
+# Moving average over k episodes.
 def smooth(x, k=500):
     x = np.asarray(x, float)
     if len(x) < k:
@@ -110,8 +119,10 @@ b = [np.nanmax(smooth(arr("beta_3_augcritic", s, "episode_diversity_norm.npy"), 
 line("peak smoothed D_norm", a, b)
 
 header("D. DIVERSITY, HELD OUT  (200 fixed layouts, deterministic policy)")
+# Load one cached checkpoint evaluation.
 def cget(arm, s, ep):
     return np.load(os.path.join(CACHE, f"{arm}__seed{s}__ep{ep}.npz"))
+# Cached (episode, return, D) for every checkpoint of one seed.
 def ladder(arm, s):
     out = []
     for f in os.listdir(CACHE):

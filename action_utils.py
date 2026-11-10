@@ -1,6 +1,9 @@
+# Helpers for turning raw MPE actions into physical forces.
+
 import numpy as np
 
 
+# Convert raw 5-dim MPE actions into the 2D force (u_x, u_y).
 def to_force(actions):
     actions = np.asarray(actions, dtype=np.float64)
 
@@ -10,6 +13,7 @@ def to_force(actions):
     return np.stack([u_x, u_y], axis=-1)
 
 
+# Cosine similarity, returning NaN when either vector is near zero.
 def safe_cosine(u, v, eps=1e-8):
     u = np.asarray(u, dtype=np.float64)
     v = np.asarray(v, dtype=np.float64)

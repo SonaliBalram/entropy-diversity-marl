@@ -1,9 +1,12 @@
+# Token diversity D: how differently agents split their time between landmarks.
+
 import numpy as np
 
 
 LANDMARK_BLOCK = slice(4, 10)
 
 
+# Index of the nearest landmark for each agent at one step.
 def tokenise(observations, n_landmarks=3):
     observations = np.asarray(observations)
 
@@ -16,6 +19,7 @@ def tokenise(observations, n_landmarks=3):
     return squared_distance.argmin(axis=-1).astype(np.int64)
 
 
+# Fraction of the episode each agent spent nearest each landmark.
 def frequency_vectors(tokens, n_landmarks=3):
     tokens = np.asarray(tokens)
     T, n_agents = tokens.shape
@@ -30,6 +34,7 @@ def frequency_vectors(tokens, n_landmarks=3):
     return f
 
 
+# Shannon entropy in bits, with 0 log 0 = 0.
 def shannon_entropy(p):
     p = np.asarray(p, dtype=np.float64)
     p = p[p > 0.0]
@@ -37,6 +42,7 @@ def shannon_entropy(p):
     return float(-(p * np.log2(p)).sum())
 
 
+# D = entropy of the average frequencies minus the average of each agent's entropy, in bits.
 def token_diversity(f):
     f = np.asarray(f, dtype=np.float64)
 
@@ -46,10 +52,12 @@ def token_diversity(f):
     return float(h_team - h_individual)
 
 
+# Largest possible D, log2 of min(agents, landmarks).
 def max_diversity(n_agents, n_landmarks):
     return float(np.log2(min(n_agents, n_landmarks)))
 
 
+# D in bits, D normalised to [0, 1], and the frequencies for one episode.
 def episode_diversity(tokens, n_landmarks=3):
     tokens = np.asarray(tokens)
     n_agents = tokens.shape[1]
@@ -62,6 +70,7 @@ def episode_diversity(tokens, n_landmarks=3):
     return d_bits, d_norm, f
 
 
+# Chance level of D, from shuffling which agent each token belongs to.
 def permutation_null(tokens, n_landmarks=3, n_permutations=200,
                      rng=None):
     tokens = np.asarray(tokens)

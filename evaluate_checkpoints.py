@@ -1,3 +1,5 @@
+# Evaluate every saved checkpoint of one run on fixed held-out layouts.
+
 import argparse
 import os
 import re
@@ -23,6 +25,7 @@ METRIC_KEYS = [
 ]
 
 
+# List the run's checkpoints in training order.
 def find_checkpoints(directory):
     out = []
 
@@ -46,6 +49,7 @@ def find_checkpoints(directory):
     return out
 
 
+# Run one checkpoint on every layout; returns rewards and metrics.
 def evaluate_one(ckpt_path, layout_seeds, deterministic, torch_seed):
     ckpt = torch.load(ckpt_path, map_location="cpu")
 
@@ -115,6 +119,7 @@ def evaluate_one(ckpt_path, layout_seeds, deterministic, torch_seed):
     return rewards, metrics
 
 
+# Average correlations via the Fisher z-transform.
 def fisher_z_mean(correlations):
     c = np.asarray([x for x in correlations if np.isfinite(x)])
     if c.size == 0:
@@ -123,6 +128,7 @@ def fisher_z_mean(correlations):
     return float(np.tanh(np.mean(np.arctanh(c)))), c.size
 
 
+# Evaluate all checkpoints and print how reward and diversity change over training.
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=42)

@@ -1,3 +1,5 @@
+# Watch trained agents play in an on-screen window.
+
 import argparse
 import time
 
@@ -10,7 +12,9 @@ from maddpg_system import MADDPGSystem
 from instantaneous_metrics import InstantaneousBehaviourMetrics
 
 
+# The training environment with MPE's window turned on.
 class RenderableEnvironment(MPEEnvironment):
+    # Create the MPE environment with rendering.
     def __init__(self, n_agents=3, max_cycles=25, render_mode="human"):
         self.n_agents = n_agents
         self.max_cycles = max_cycles
@@ -38,6 +42,7 @@ class RenderableEnvironment(MPEEnvironment):
         self._episode_over = True
 
 
+# Load a checkpoint and play a few episodes on screen.
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(

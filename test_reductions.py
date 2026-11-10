@@ -1,3 +1,5 @@
+# Correctness checks: each new arm must exactly match an earlier arm when its new part is off.
+
 import os
 import shutil
 import subprocess
@@ -15,6 +17,7 @@ COMMON = ["--seed", str(SEED), "--batch-size", "256",
 WORK = os.path.join(HERE, ".reduction_test")
 
 
+# Build a throwaway copy of the project from symlinks.
 def build_sandbox():
     if os.path.isdir(WORK):
         shutil.rmtree(WORK)
@@ -31,6 +34,7 @@ def build_sandbox():
                    os.path.join(WORK, sub, name))
 
 
+# Run a short training job inside the sandbox.
 def train(script, extra, episodes):
     cmd = [sys.executable, os.path.join(WORK, script)] + extra + \
           COMMON + ["--episodes", str(episodes)]
@@ -40,6 +44,7 @@ def train(script, extra, episodes):
         raise SystemExit(f"FAILED: {' '.join(cmd)}")
 
 
+# Load every saved array for one experiment.
 def load(experiment):
     d = os.path.join(WORK, "results", experiment, f"seed_{SEED}")
     out = {}
@@ -53,6 +58,7 @@ def load(experiment):
     return out
 
 
+# Check that every array present in both runs is bit-identical.
 def compare(a, b, label):
     A, B = load(a), load(b)
     shared = sorted(set(A) & set(B))
@@ -69,6 +75,7 @@ def compare(a, b, label):
     return not bad
 
 
+# Run all the reduction checks and print PASS or FAIL.
 def main():
     build_sandbox()
 
@@ -197,6 +204,7 @@ def main():
     act = torch.zeros(4, 3, 5)
     ctx = torch.zeros(4, 9)
 
+    # True if calling fn raises a ValueError.
     def _raises(fn):
         try:
             fn()
@@ -237,11 +245,13 @@ def main():
     return 0 if ok else 1
 
 
+# Token diversity of a frequency matrix.
 def _D(f):
     from token_diversity import token_diversity
     return token_diversity(f)
 
 
+# Check that a bonus on the last step adds exactly gamma^(T-1) times the bonus to the return.
 def _terminal_only(z0, z5, gamma=0.95, T=25):
     d = z5["episode_diversity_norm"]
     keep = d > 0

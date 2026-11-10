@@ -1,3 +1,5 @@
+# A1r correctness checks: with its new parts switched off, A1r must match Experiment 2.
+
 import os
 import sys
 import json
@@ -23,6 +25,7 @@ WORK = os.path.join(HERE, ".a1r_reduction_test")
 CONST = os.path.join("results", "a1r_pilot", "a1r_constants.json")
 
 
+# Build a throwaway copy of the project from symlinks.
 def build_sandbox():
     if os.path.isdir(WORK):
         shutil.rmtree(WORK)
@@ -47,6 +50,7 @@ def build_sandbox():
     return False
 
 
+# Run a short training job inside the sandbox.
 def train(script, extra):
     cmd = ([sys.executable, os.path.join(WORK, script)] + extra
            + COMMON + ["--episodes", str(EPISODES)])
@@ -56,6 +60,7 @@ def train(script, extra):
         raise SystemExit(f"FAILED: {' '.join(cmd)}")
 
 
+# Load every saved array from a results folder.
 def load(path):
     out = {}
     for f in sorted(os.listdir(path)):
@@ -68,10 +73,12 @@ def load(path):
     return out
 
 
+# Results folder for one experiment inside the sandbox.
 def rdir(experiment):
     return os.path.join(WORK, "results", experiment, f"seed_{SEED}")
 
 
+# Check that every array present in both runs is bit-identical.
 def compare(a, b, label, skip=()):
     A, B = load(a), load(b)
     shared = sorted((set(A) & set(B)) - set(skip))
@@ -87,6 +94,7 @@ def compare(a, b, label, skip=()):
     return ok
 
 
+# Run all the A1r reduction checks and print PASS or FAIL.
 def main():
     have_constants = build_sandbox()
     ok = True

@@ -1,3 +1,5 @@
+# A1r pilot: freeze the gate constants from trained A1 states and give a go / no-go verdict.
+
 import os
 import sys
 import json
@@ -23,6 +25,7 @@ MIN_INTERDECILE_G = 0.05
 MIN_DISPOSSESSED  = 0.02
 
 
+# Roll out a policy and keep the observations at which actions were taken.
 def collect(env, maddpg, layout_seeds, deterministic, torch_seed):
     torch.manual_seed(torch_seed)
     obs_all, sig_all, rets = [], [], []
@@ -53,6 +56,7 @@ def collect(env, maddpg, layout_seeds, deterministic, torch_seed):
             np.asarray(rets))
 
 
+# Slope, intercept and correlation of a least-squares line.
 def ols(x, y):
     x = np.asarray(x, dtype=np.float64)
     y = np.asarray(y, dtype=np.float64)
@@ -66,6 +70,7 @@ def ols(x, y):
     return slope, float(y.mean() - slope * x.mean()), r
 
 
+# Fit kappa and log Z, write the constants file and the pilot report.
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpt-root", default="checkpoints/alpha_0.01",
@@ -94,6 +99,7 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     lines = []
 
+    # Print a line and keep it for the report.
     def say(s=""):
         print(s)
         lines.append(s)
@@ -166,6 +172,7 @@ def main():
     g = g_t.numpy()
     G = combined_gap(m_t, g_t, args.mode).numpy()
 
+    # Quantile of an array.
     def q(a, p):
         return float(np.quantile(a, p))
 
@@ -236,6 +243,7 @@ def main():
     secure = g < -kappa
     target_vague = m < kappa
 
+    # Percentage of True values in a mask.
     def pc(mask):
         return 100.0 * float(mask.mean())
 
@@ -246,6 +254,7 @@ def main():
         say(f"{name:34s}{pc(own & target_vague):15.2f}%"
             f"{pc(own & ~target_vague):15.2f}%")
 
+    # Mean gate weight over the states in a mask.
     def mean_w(mask):
         if not mask.any():
             return float("nan")

@@ -1,3 +1,5 @@
+# MADDPG learner: one shared stochastic actor and twin centralised critics (clipped double-Q).
+
 import copy
 
 import torch
@@ -7,7 +9,9 @@ from models.actor import SharedContinuousActor
 from models.critic import CentralizedCritic
 
 
+# The learner used by the baseline, Exp 2 and Exp 3 arms.
 class MADDPGSystem:
+    # Build the actor, twin critics, their target copies and optimisers.
     def __init__(
         self,
         n_agents,
@@ -65,6 +69,7 @@ class MADDPGSystem:
 
         self.actor_target = copy.deepcopy(self.actor).to(device)
 
+        # Create one centralised critic.
         def make_critic():
             return CentralizedCritic(
                 n_agents,
@@ -110,6 +115,7 @@ class MADDPGSystem:
 
         self._critic_params = critic_params
 
+    # Choose actions for all agents from their observations.
     def act(self, obs_n, deterministic=False):
         obs_t = torch.as_tensor(
             obs_n,
@@ -126,6 +132,7 @@ class MADDPGSystem:
 
         return actions.cpu().numpy()
 
+    # Per-agent policy mean and standard deviation at the current observations.
     def policy_params(self, obs_n):
         obs_t = torch.as_tensor(
             obs_n,
@@ -141,6 +148,7 @@ class MADDPGSystem:
             d.stddev.cpu().numpy()
         )
 
+    # Move the target network slowly towards the online network.
     def _polyak_update(self, net, target_net):
         with torch.no_grad():
             for p, tp in zip(
@@ -156,6 +164,7 @@ class MADDPGSystem:
             ):
                 tb.data.copy_(b.data)
 
+    # One training step: update the critics, and every few steps the actor and targets.
     def update(self, batch):
         if self.context_dim > 0:
             (obs, acts, team_rew, next_obs, done,
@@ -343,6 +352,7 @@ class MADDPGSystem:
             "realised_action_spread": realised_spread,
         }
 
+    # Save all networks, optimisers and metadata to a checkpoint file.
     def save(self, path, metadata=None):
         state = {
             "actor": self.actor.state_dict(),
@@ -367,6 +377,7 @@ class MADDPGSystem:
 
         torch.save(state, path)
 
+    # Load networks and optimisers from a checkpoint file.
     def load(self, path):
         ckpt = torch.load(path, map_location=self.device)
 

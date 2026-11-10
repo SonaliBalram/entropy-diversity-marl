@@ -1,9 +1,13 @@
+# Policy-level diversity: how far apart agents' action distributions are.
+
 import itertools
 
 import numpy as np
 
 
+# KL, JS and Wasserstein distances between agents' Gaussian policies.
 class PolicyDivergenceMetrics:
+    # Set up the agent pairs.
     def __init__(self, n_agents, action_dim):
         self.n_agents = n_agents
         self.action_dim = action_dim
@@ -14,6 +18,7 @@ class PolicyDivergenceMetrics:
 
         self.policy_distributions = []
 
+    # Store one step's policy means and standard deviations.
     def record(self, means, stds):
         means = np.asarray(means, dtype=np.float64)
         stds = np.asarray(stds, dtype=np.float64)
@@ -36,6 +41,7 @@ class PolicyDivergenceMetrics:
             (means.copy(), stds.copy())
         )
 
+    # KL divergence between two Gaussians.
     @staticmethod
     def gaussian_kl(mean_p, std_p, mean_q, std_q):
         variance_p = std_p ** 2
@@ -50,6 +56,7 @@ class PolicyDivergenceMetrics:
 
         return float(np.sum(kl))
 
+    # Jensen-Shannon divergence between two Gaussians.
     @staticmethod
     def gaussian_js(mean_p, std_p, mean_q, std_q):
         mean_m = (mean_p + mean_q) / 2.0
@@ -70,6 +77,7 @@ class PolicyDivergenceMetrics:
             )
         )
 
+    # 2-Wasserstein distance between the two squashed (post-sigmoid) policies.
     @staticmethod
     def squashed_w2(mean_p, std_p, mean_q, std_q, n_samples=512, rng=None):
         if rng is None:
@@ -90,6 +98,7 @@ class PolicyDivergenceMetrics:
 
         return float(np.sqrt(total))
 
+    # Average each divergence over the episode, per pair and overall.
     def get_episode_results(self):
         if len(self.policy_distributions) == 0:
             raise ValueError(
@@ -137,5 +146,6 @@ class PolicyDivergenceMetrics:
 
         return results
 
+    # Clear the stored policies for a new episode.
     def reset(self):
         self.policy_distributions = []

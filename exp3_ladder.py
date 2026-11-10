@@ -1,3 +1,5 @@
+# Evaluate every checkpoint (the ladder) and compare arms at matched return.
+
 import argparse
 import os
 import re
@@ -16,6 +18,7 @@ from exp3_outcome import evaluate_checkpoint
 LAYOUT_BASE = 900_000_000
 
 
+# (episode, path) for every checkpoint, with best.pt last.
 def rungs(root, seed):
     d = os.path.join(root, f"seed_{seed}")
     out = []
@@ -30,6 +33,7 @@ def rungs(root, seed):
     return out
 
 
+# Evaluate any checkpoints not yet in the cache.
 def fill(args):
     layout_seeds = [LAYOUT_BASE + i for i in range(args.layouts)]
     os.makedirs(args.cache_dir, exist_ok=True)
@@ -77,6 +81,7 @@ def fill(args):
           f"{len(todo) - done} still outstanding")
 
 
+# Load the cached ladder for every seed of one arm.
 def load_arm(cache_dir, arm, seeds):
     out = {}
     for seed in seeds:
@@ -98,6 +103,7 @@ def load_arm(cache_dir, arm, seeds):
     return out
 
 
+# Mean, spread and t-statistic of paired values.
 def paired(values):
     v = np.asarray(values, dtype=float)
     n = len(v)
@@ -107,6 +113,7 @@ def paired(values):
     return v.mean(), sd, t
 
 
+# D difference between falling and rising training at equal return, within one arm.
 def hysteresis_floor(arm, seeds, tol):
     per_seed, counts = [], []
     for seed in seeds:
@@ -128,6 +135,7 @@ def hysteresis_floor(arm, seeds, tol):
     return per_seed, counts
 
 
+# Print the matched-return comparison between control and treatment.
 def report(args):
     ctrl = load_arm(args.cache_dir, args.control, args.seeds)
     trt = load_arm(args.cache_dir, args.treatment, args.seeds)
@@ -197,6 +205,7 @@ def report(args):
                 print(f"  WARNING seeds outside tolerance: {unmatched}")
 
 
+# Fill the cache and/or print the report.
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--fill", action="store_true")

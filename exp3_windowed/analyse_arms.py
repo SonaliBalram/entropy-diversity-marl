@@ -1,3 +1,5 @@
+# Pre-registered comparison of the windowed Experiment 3 arms at matched return.
+
 import os
 import sys
 import argparse
@@ -20,6 +22,7 @@ SIGMA_TRIPWIRE = 0.02
 SIGMA_FROM_EPISODE = 2000
 
 
+# Episode at which best.pt was saved, or None.
 def best_episode(path):
     import torch
     ck = torch.load(path, map_location="cpu", weights_only=False)
@@ -27,6 +30,7 @@ def best_episode(path):
     return int(ep) if ep is not None else None
 
 
+# Evaluate every checkpoint of every seed of one arm.
 def evaluate_arm(label, root, seeds, layout_seeds, cache_dir):
     arm = {}
     for s in seeds:
@@ -47,6 +51,7 @@ def evaluate_arm(label, root, seeds, layout_seeds, cache_dir):
     return arm
 
 
+# Treatment checkpoint whose return is closest to the control's best.
 def match(control_best, treatment, branch, key, tol=MATCH_TOL):
     lad = treatment["ladder"]
     peak_ep = max(lad, key=lambda p: p["ret"])["episode"]
@@ -57,12 +62,14 @@ def match(control_best, treatment, branch, key, tol=MATCH_TOL):
     return m, m["ret"] - control_best["ret"], m[key] - control_best[key]
 
 
+# Mean, spread and t-statistic of paired values.
 def paired_t(x):
     x = np.asarray(x, dtype=float)
     sd = x.std(ddof=1)
     return float(x.mean()), float(sd), float(x.mean() / (sd / np.sqrt(len(x))))
 
 
+# Print the matched-return difference for one setting.
 def report(C, T, seeds, branch, key, clabel, tlabel, floor=None):
     print(f"\n  [{key}, branch = {branch}]")
     dd, gaps = [], []
@@ -82,6 +89,7 @@ def report(C, T, seeds, branch, key, clabel, tlabel, floor=None):
     return mean, sd, t, dd
 
 
+# Evaluate both arms, print the comparison and save it.
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--control", required=True, help="label:checkpoint_root")

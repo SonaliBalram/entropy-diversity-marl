@@ -1,3 +1,5 @@
+# Exploratory: how much of the arena the team covers, per arm, at matched return.
+
 import os
 import sys
 import argparse
@@ -17,6 +19,7 @@ MEASURES = ["coverage_entropy", "cells_visited", "coverage_windowed"]
 UNITS = {"coverage_entropy": "bits", "cells_visited": "cells", "coverage_windowed": "bits"}
 
 
+# Coverage entropy, cells visited and windowed coverage for each layout.
 def coverage_measures(cells):
     ent, vis, win, resid = [], [], [], []
     for ep in cells:
@@ -38,6 +41,7 @@ def coverage_measures(cells):
             float(np.max(resid)))
 
 
+# Compare coverage between each arm and its control and save the results.
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, nargs="+", default=[42, 128, 456, 789])
@@ -52,6 +56,7 @@ def main():
     arms = {k: os.path.join(PROJECT_ROOT, v) for k, v in pm.ARMS.items()}
     S = args.seeds
 
+    # Deterministic rollout of one checkpoint, from the cache if available.
     def det(arm, s, name, path):
         return pm.cached_rollout(cache_dir, arm, s, name, path, layout_seeds, False)
 

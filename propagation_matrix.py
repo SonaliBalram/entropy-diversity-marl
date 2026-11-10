@@ -1,3 +1,5 @@
+# Does entropy and diversity spread from actions to trajectories to the arena? Compares each arm with its control.
+
 import os
 import re
 import sys
@@ -48,6 +50,7 @@ PUBLISHED = {
 }
 
 
+# Which 3x3 arena grid cell each agent is in.
 def grid_cell(observations):
     pos = np.asarray(observations)[:, 2:4]
     ix = np.digitize(pos[:, 0], GRID_EDGES)
@@ -55,6 +58,7 @@ def grid_cell(observations):
     return (3 * ix + iy).astype(np.int64)
 
 
+# Load a trained learner from a checkpoint.
 def load_policy(path):
     import torch
     from maddpg_system import MADDPGSystem
@@ -72,6 +76,7 @@ def load_policy(path):
     return m, (int(ep) if ep is not None else None)
 
 
+# Run one checkpoint on the held-out layouts and record tokens, cells, forces and entropy.
 def rollout(path, layout_seeds, stochastic, torch_seed):
     import torch
     import torch.nn.functional as Fn
@@ -127,6 +132,7 @@ def rollout(path, layout_seeds, stochastic, torch_seed):
     return out
 
 
+# Rollout results, from the cache if available.
 def cached_rollout(cache_dir, arm, seed, name, path, layout_seeds, stochastic):
     kind = "stoch" if stochastic else "det"
     f = os.path.join(cache_dir, f"{arm}_s{seed}_{name}_{kind}.npz")
@@ -137,6 +143,7 @@ def cached_rollout(cache_dir, arm, seed, name, path, layout_seeds, stochastic):
     return out
 
 
+# (episode, path) for every checkpoint of one seed.
 def ladder(root, seed):
     d = os.path.join(root, f"seed_{seed}")
     items = []
@@ -147,6 +154,7 @@ def ladder(root, seed):
     return sorted(items)
 
 
+# Windowed D, average entropy and whole-episode D for each layout.
 def token_measures(tokens, n_symbols):
     div, ent, old = [], [], []
     for tok in tokens:
@@ -158,6 +166,7 @@ def token_measures(tokens, n_symbols):
     return np.asarray(div), np.asarray(ent), np.asarray(old)
 
 
+# Mean distance between agents' forces.
 def pairwise_force_distance(forces):
     n = forces.shape[2]
     d = [np.linalg.norm(forces[:, :, i] - forces[:, :, j], axis=-1)
@@ -165,6 +174,7 @@ def pairwise_force_distance(forces):
     return float(np.mean(d))
 
 
+# Diversity at the action, trajectory and arena levels.
 def diversity_cells(det):
     tdiv, _, told = token_measures(det["tokens"], N_LANDMARKS)
     adiv, _, _ = token_measures(det["cells"], N_CELLS)
@@ -174,6 +184,7 @@ def diversity_cells(det):
                 D_old=float(told.mean()))
 
 
+# Entropy at the action, trajectory and arena levels.
 def entropy_cells(sto):
     _, tent, _ = token_measures(sto["tokens"], N_LANDMARKS)
     _, aent, _ = token_measures(sto["cells"], N_CELLS)
@@ -183,7 +194,9 @@ def entropy_cells(sto):
                 sigma=float(sto["sigma"].mean()))
 
 
+# Chance levels of the trajectory and arena diversity, by shuffling.
 def null_levels(det, rng):
+    # Chance level for one kind of token.
     def one(tokens, k):
         v = [permutation_null_windowed(t.T.astype(np.int64), N_WINDOWS, k, N_PERM, rng)
              for t in tokens]
@@ -192,6 +205,7 @@ def null_levels(det, rng):
                 null_arena=one(det["cells"], N_CELLS))
 
 
+# Treatment checkpoint whose return is closest to the control's.
 def match(control_ret, treatment):
     lad = treatment["ladder"]
     peak_ep = max(lad, key=lambda p: p["ret"])["episode"]
@@ -201,16 +215,20 @@ def match(control_ret, treatment):
     return m, m["ret"] - control_ret
 
 
+# Mean, spread and t-statistic of paired values.
 def paired_t(x):
     x = np.asarray(x, dtype=float)
     sd = x.std(ddof=1)
     return float(x.mean()), float(sd), float(x.mean() / (sd / np.sqrt(len(x))))
 
 
+# Print to the screen and to a report file at the same time.
 class Tee:
+    # Open the report file.
     def __init__(self, path):
         self.f = open(path, "w")
 
+    # Print a line and write it to the file.
     def __call__(self, *a):
         s = " ".join(str(x) for x in a)
         print(s, flush=True)
@@ -218,6 +236,7 @@ class Tee:
         self.f.flush()
 
 
+# Build the matrix of differences, save it and plot it.
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, nargs="+", default=[42, 128, 456, 789])
@@ -287,6 +306,7 @@ def main():
     extras = {}
     abs_vals = {}
 
+    # All measures for one checkpoint.
     def cells_for(arm, s, point):
         det = cached_rollout(cache_dir, arm, s, point["name"], point["path"], layout_seeds, False)
         sto = cached_rollout(cache_dir, arm, s, point["name"], point["path"], layout_seeds, True)
@@ -321,6 +341,7 @@ def main():
         extras[(t, c)] = dict(D_old=diffs["D_old"], sigma=diffs["sigma"], gaps=gaps, names=names)
         abs_vals[(t, c)] = {k: (float(np.mean(a)), float(np.mean(b))) for k, (a, b) in avals.items()}
 
+    # Format a paired difference, starring significant ones.
     def fmt(v):
         m, sd, tt = paired_t(v)
         star = "*" if abs(tt) >= T_CRIT else " "
@@ -391,6 +412,7 @@ def main():
     plot(rows, table, COLS, args.out_dir, log)
 
 
+# Draw the two heatmaps of the matrix.
 def plot(rows, table, COLS, out_dir, log):
     try:
         import matplotlib

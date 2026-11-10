@@ -1,3 +1,5 @@
+# Held-out evaluation of trained baseline agents on fixed layouts.
+
 import os
 import argparse
 
@@ -11,6 +13,7 @@ from temporal_behaviour import TemporalBehaviourMetrics
 from policy_divergence_behaviour import PolicyDivergenceMetrics
 
 
+# Run the policy on every layout and collect rewards and behaviour metrics.
 def run_episodes(env, maddpg, layout_seeds, deterministic,
                  repeats=1, torch_seed=0, collect_behaviour=True):
     torch.manual_seed(torch_seed)
@@ -76,6 +79,7 @@ def run_episodes(env, maddpg, layout_seeds, deterministic,
     return rewards, metrics
 
 
+# Correlation between a metric and reward within each layout, averaged over layouts.
 def within_layout_correlation(rewards, metric):
     zs = []
 
@@ -99,6 +103,7 @@ def within_layout_correlation(rewards, metric):
     return float(np.tanh(np.mean(zs))), len(zs)
 
 
+# Print the mean, spread and range of the rewards.
 def summarize(rewards, label):
     flat = rewards.ravel()
     print(
@@ -108,6 +113,7 @@ def summarize(rewards, label):
     )
 
 
+# Split reward variance into between-layout and within-layout parts.
 def decompose(rewards):
     layout_means = rewards.mean(axis=1)
     between = layout_means.var()
@@ -115,6 +121,7 @@ def decompose(rewards):
     return between, within
 
 
+# Evaluate each seed's checkpoint and print the summary.
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--seeds", type=int, nargs="+",

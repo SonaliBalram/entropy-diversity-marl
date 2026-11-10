@@ -1,3 +1,5 @@
+# Experiment 3 (A2, A2c, A2z): MADDPG with a whole-episode token-diversity bonus of weight beta.
+
 import os
 import sys
 import time
@@ -9,6 +11,7 @@ import numpy as np
 import torch
 
 
+# Let this script import modules from the project root.
 PROJECT_ROOT = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
 )
@@ -30,6 +33,7 @@ from token_diversity import (
 )
 
 
+# Command-line options.
 parser = argparse.ArgumentParser()
 parser.add_argument("--seed", type=int, default=42)
 parser.add_argument("--episodes", type=int, default=50000)
@@ -78,6 +82,7 @@ parser.add_argument("--null-every", type=int, default=500,
                          "against it; it does not enter the reward.")
 args = parser.parse_args()
 
+# The diversity bonus weight cannot be negative.
 if args.beta < 0.0:
     raise SystemExit(
         f"--beta must be >= 0 (received {args.beta})."
@@ -86,6 +91,7 @@ if args.beta < 0.0:
 SEED = args.seed
 
 
+# Seed every random number generator so runs are reproducible.
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -97,6 +103,7 @@ def set_seed(seed):
 set_seed(SEED)
 
 
+# Environment, network and training settings.
 N_AGENTS = 3
 OBSERVATION_DIM = 18
 ACTION_DIM = 5
@@ -148,6 +155,7 @@ os.makedirs(RESULTS_DIR, exist_ok=True)
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
 
+# Create the environment, learner, replay buffer and behaviour metrics.
 env = MPEEnvironment(n_agents=N_AGENTS, max_cycles=MAX_CYCLES)
 
 maddpg = MADDPGSystem(
@@ -186,6 +194,7 @@ action_rng = np.random.default_rng(SEED)
 null_rng = np.random.default_rng(SEED + 7_000_000)
 
 
+# Lists that collect the training logs.
 episode_rewards = []
 episode_shaped_rewards = []
 episode_diversity_norm = []
@@ -217,6 +226,7 @@ best_episode = -1
 BEST_BURN_IN = 2000
 
 
+# Run settings stored inside every saved checkpoint.
 CHECKPOINT_METADATA = {
     "seed": SEED,
     "n_agents": N_AGENTS,
@@ -273,6 +283,7 @@ print("-" * 64)
 
 start_time = time.time()
 
+# Main training loop, one episode at a time.
 for episode in range(NUM_EPISODES):
     episode_seed = SEED * 1_000_000 + episode
 
@@ -291,6 +302,7 @@ for episode in range(NUM_EPISODES):
         global_step += 1
         episode_steps += 1
 
+        # Random actions during warmup, then actions from the policy.
         if global_step < WARMUP_STEPS:
             actions = action_rng.random(
                 (N_AGENTS, ACTION_DIM)
@@ -298,6 +310,7 @@ for episode in range(NUM_EPISODES):
         else:
             actions = maddpg.act(observations, deterministic=False)
 
+        # Record this step for the behaviour metrics.
         instant_metrics.record(actions)
         temporal_metrics.record(actions)
 
@@ -312,9 +325,11 @@ for episode in range(NUM_EPISODES):
             info
         ) = env.step(actions)
 
+        # Which landmark each agent is nearest to after this step.
         token_t = tokenise(next_observations, N_LANDMARKS)
         episode_tokens.append(token_t)
 
+        # Augmented critic: running landmark counts before and after this step.
         if CONTEXT_DIM:
             ctx_before = token_counts.reshape(-1) / MAX_CYCLES
             token_counts[np.arange(N_AGENTS), token_t] += 1
@@ -322,6 +337,7 @@ for episode in range(NUM_EPISODES):
         else:
             ctx_before = ctx_after = None
 
+        # Hold transitions until the episode ends, so the bonus can be added first.
         pending.append(
             [observations, actions, reward,
              next_observations, terminated,
@@ -336,6 +352,7 @@ for episode in range(NUM_EPISODES):
             and global_step >= WARMUP_STEPS
             and global_step % UPDATE_EVERY == 0
         ):
+            # One gradient update of the critics and actor from a replay sample.
             info_update = maddpg.update(
                 replay_buffer.sample(BATCH_SIZE)
             )
@@ -353,12 +370,14 @@ for episode in range(NUM_EPISODES):
         if terminated or truncated:
             break
 
+    # Token diversity D for the finished episode.
     tokens = np.asarray(episode_tokens)
 
     d_bits, d_norm, token_f = episode_diversity(
         tokens, n_landmarks=N_LANDMARKS
     )
 
+    # Check the critic's final context equals the episode's frequencies.
     if CONTEXT_DIM:
         assert np.allclose(
             pending[-1][6].reshape(N_AGENTS, N_LANDMARKS),
@@ -366,6 +385,7 @@ for episode in range(NUM_EPISODES):
             atol=1e-6,
         ), "terminal context is not the frequency matrix f"
 
+    # Diversity bonus: on the final step, or spread evenly over all steps.
     bonus = BETA * d_norm
 
     if BONUS_SCHEDULE == "terminal":
@@ -375,6 +395,7 @@ for episode in range(NUM_EPISODES):
         for transition in pending:
             transition[2] += share
 
+    # Store the episode's transitions in the replay buffer.
     for (observation_t, action_t, reward_t, next_t, done_t,
          ctx_t, next_ctx_t) in pending:
         replay_buffer.add(
@@ -384,6 +405,7 @@ for episode in range(NUM_EPISODES):
 
     step_rewards = [transition[2] for transition in pending]
 
+    # Every few hundred episodes, estimate the chance level of D by shuffling agents.
     if (episode + 1) % args.null_every == 0:
         null_mean, _ = permutation_null(
             tokens,
@@ -400,6 +422,7 @@ for episode in range(NUM_EPISODES):
     episode_diversity_norm.append(d_norm)
     token_frequencies.append(token_f)
 
+    # Discounted return from each step, to compare with the critic's estimates.
     running = 0.0
     returns_to_go = np.empty(len(step_rewards), dtype=np.float64)
 
@@ -414,6 +437,7 @@ for episode in range(NUM_EPISODES):
     running_mean_rewards.append(float(np.mean(reward_window)))
     running_std_rewards.append(float(np.std(reward_window)))
 
+    # Collect this episode's behaviour metrics.
     record = {}
     record.update(instant_metrics.get_episode_results())
     record.update(temporal_metrics.get_episode_results())
@@ -427,6 +451,7 @@ for episode in range(NUM_EPISODES):
     temporal_metrics.reset()
     divergence_metrics.reset()
 
+    # Print a progress line.
     if (episode + 1) % args.print_every == 0 or episode == 0:
         line = (
             f"Episode {episode + 1:6d}"
@@ -463,6 +488,7 @@ for episode in range(NUM_EPISODES):
 
         print(line, flush=True)
 
+    # Save a periodic checkpoint.
     if (episode + 1) % args.checkpoint_every == 0:
         maddpg.save(
             os.path.join(
@@ -475,6 +501,7 @@ for episode in range(NUM_EPISODES):
         episode + 1 >= BEST_BURN_IN
         and running_mean_rewards[-1] > best_reward
     ):
+        # Save best.pt whenever the 100-episode average reward improves.
         best_reward = running_mean_rewards[-1]
         best_episode = episode + 1
         maddpg.save(
@@ -490,6 +517,7 @@ print(f"Total environment steps : {global_step:,}")
 print(f"Total gradient updates  : {update_count:,}")
 print(f"Wall clock              : {(time.time()-start_time)/3600:.2f} h")
 
+# Save all training logs to the results folder.
 arrays = {
     "episode_rewards": episode_rewards,
     "episode_shaped_rewards": episode_shaped_rewards,
@@ -536,6 +564,7 @@ if null_values:
 print(f"Mean D over last 100 episodes: "
       f"{float(np.mean(episode_diversity_norm[-100:])):.4f}")
 
+# Save the final model.
 MODEL_PATH = os.path.join(CHECKPOINT_DIR, "final.pt")
 
 maddpg.save(MODEL_PATH, metadata=CHECKPOINT_METADATA)

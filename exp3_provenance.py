@@ -1,3 +1,5 @@
+# Print a header for evaluation logs: date, platform, package versions and file hashes.
+
 import hashlib, os, platform, subprocess, sys, time
 
 FILES = [
@@ -6,6 +8,7 @@ FILES = [
     "models/actor.py", "models/critic.py", "exp3/train_exp3.py",
 ]
 
+# Short SHA-256 hash of a file.
 def sha(p):
     h = hashlib.sha256()
     with open(p, "rb") as f:
@@ -13,6 +16,7 @@ def sha(p):
             h.update(b)
     return h.hexdigest()[:16]
 
+# Print the header for the given arms.
 def main():
     arms = sys.argv[1:] or ["baseline", "beta_3"]
     W = 72

@@ -1,3 +1,5 @@
+# Compare A2 and A2c behaviour metrics at matched reward levels.
+
 import numpy as np
 
 S = [42, 128, 456, 789]
@@ -7,12 +9,14 @@ TOL = 0.25
 W = 72
 
 
+# Moving average over k episodes.
 def smooth(x, k=K):
     x = np.asarray(x, float)
     c = np.cumsum(np.insert(x, 0, 0.0))
     return (c[k:] - c[:-k]) / k
 
 
+# Load one seed's smoothed reward and behaviour metrics.
 def load(arm, seed):
     r = smooth(np.load(f"results/{arm}/seed_{seed}/episode_rewards.npy"))
     z = np.load(f"results/{arm}/seed_{seed}/behaviour_history.npz")
@@ -22,6 +26,7 @@ def load(arm, seed):
     return r, m
 
 
+# Index on the rising part of training whose reward is closest to the target.
 def match(r, target):
     peak = int(np.argmax(r))
     asc = r[:peak + 1]

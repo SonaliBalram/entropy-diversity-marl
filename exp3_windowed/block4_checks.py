@@ -1,3 +1,5 @@
+# Checks on the windowed diversity measure using existing checkpoints, before training.
+
 import os
 import re
 import sys
@@ -21,6 +23,7 @@ BETA = 3.0
 GATE = dict(seed=42, episode=2000, ret=-35.580, D=0.9306)
 
 
+# Run one checkpoint on the layouts; return tokens, returns and whole-episode D.
 def rollout_tokens(path, layout_seeds, n_agents=3, max_cycles=25):
     import torch
     from environment import MPEEnvironment
@@ -61,6 +64,7 @@ def rollout_tokens(path, layout_seeds, n_agents=3, max_cycles=25):
     return np.stack(all_tokens), np.asarray(returns), np.asarray(old_bits)
 
 
+# Rollout results for one checkpoint, from the cache if available.
 def cached(cache_dir, key, path, layout_seeds):
     f = os.path.join(cache_dir, f"{key}.npz")
     if os.path.exists(f):
@@ -71,6 +75,7 @@ def cached(cache_dir, key, path, layout_seeds):
     return tokens, returns, old_bits
 
 
+# (episode, path) for every checkpoint of one seed.
 def ladder(root, seed):
     d = os.path.join(root, f"seed_{seed}")
     items = []
@@ -81,6 +86,7 @@ def ladder(root, seed):
     return sorted(items)
 
 
+# Windowed D, its normalised value, and one-window D for each layout.
 def per_layout_measures(tokens):
     win, win_n, one = [], [], []
     for tok in tokens:
@@ -92,6 +98,7 @@ def per_layout_measures(tokens):
     return np.asarray(win), np.asarray(win_n), np.asarray(one)
 
 
+# Shuffle tokens across agents within each window.
 def shuffled_windowed(tok_nt, rng, n_windows=N_WINDOWS):
     n, T = tok_nt.shape
     L = T // n_windows
@@ -102,6 +109,7 @@ def shuffled_windowed(tok_nt, rng, n_windows=N_WINDOWS):
     return out
 
 
+# Mean windowed and whole-episode D over shuffled copies.
 def zero_level(tokens, rng, n_perm):
     win, old = [], []
     for tok in tokens:
@@ -113,6 +121,7 @@ def zero_level(tokens, rng, n_perm):
     return float(np.mean(win)), float(np.mean(old))
 
 
+# D difference between falling and rising training at equal return.
 def hysteresis(points, key, tol=MATCH_TOL):
     rets = np.array([p["ret"] for p in points])
     k = int(np.argmax(rets))
@@ -125,6 +134,7 @@ def hysteresis(points, key, tol=MATCH_TOL):
     return (float(np.mean(diffs)) if diffs else float("nan")), len(diffs)
 
 
+# Mean, spread and t-statistic of paired values, ignoring NaNs.
 def paired(values):
     v = np.asarray(values, dtype=float)
     v = v[~np.isnan(v)]
@@ -134,6 +144,7 @@ def paired(values):
     return float(v.mean()), float(sd), float(v.mean() / (sd / np.sqrt(len(v))))
 
 
+# Run the checks for one arm and save the results.
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=os.path.join(PROJECT_ROOT, "checkpoints", "baseline"))
