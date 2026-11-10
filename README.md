@@ -17,6 +17,9 @@ Honours research project, Computational and Applied Mathematics, University of t
 | A2 | Trajectory-diversity bonus on token D, beta = 3 | `exp3/train_exp3.py --beta 3` | `results/beta_3/` |
 | A2c | A2 with the augmented critic | `exp3/train_exp3.py --beta 3 --augment-critic` | `results/beta_3_augcritic/` |
 | A2z | Capacity control: augmented critic, no bonus (beta = 0) | `run_a2z.sh` | `results/beta_0_augcritic/` |
+| A2w | Windowed trajectory-diversity bonus, beta = 3, 5 windows per episode | `exp3_windowed/train_a2w.py --beta 3` | `results/beta_3_w5/` |
+| A2cw | A2w with the critic given the windowed context | `exp3_windowed/train_a2w.py --beta 3 --augment-critic` | `results/beta_3_w5_augcritic/` |
+| A2cwT | A2cw with the final step treated as terminal | `exp3_windowed/train_a2w.py --beta 3 --augment-critic --terminal-at-limit` | `results/beta_3_w5_augcritic_term/` |
 
 Log files use older names for the Exp 3 arms: `exp3` = A2, `exp3c` = A2c, `exp3z` = A2z.
 
@@ -28,9 +31,13 @@ Run any script with `--help` to see all of its options.
 |---|---|
 | `environment.py`, `maddpg_system.py`, `replay_buffer.py`, `action_utils.py`, `models/` | Core algorithm: environment wrapper, MADDPG system, replay buffer, actor and critic networks |
 | `train_baseline.py`, `exp2/`, `exp3/`, `A1r/`, `run_a2z.sh` | Training, one entry point per experiment |
+| `exp3_windowed/` | Windowed arms (A2w, A2cw, A2cwT): training (`train_a2w.py`), the windowed diversity measure (`windowed_diversity.py`), and their analysis (`block4_checks.py`, `analyse_arms.py`, results in `results/exp3_windowed/`) |
 | `instantaneous_metrics.py`, `temporal_behaviour.py`, `policy_divergence_behaviour.py`, `token_diversity.py` | Behavioural diversity measures |
 | `evaluate_baseline.py`, `evaluate_checkpoints.py`, `token_eval.py`, `exp3_*.py`, `analyse_run.py` | Held-out evaluation and analysis |
-| `test_reductions.py`, `A1r/test_reductions_a1r.py` | Correctness checks: each new arm must reduce exactly to an earlier arm when its new parameter is switched off |
+| `propagation_matrix.py` | Matched-return comparison of each arm against its control at the action, trajectory and arena levels (`results/propagation_matrix/`) |
+| `team_coverage.py` | Exploratory team-coverage measure on a 3x3 arena grid, reusing the propagation-matrix arms (`results/team_coverage/`) |
+| `make_report_figures.py` | Figures for the report (`results/report_figures/`); needs the per-episode training histories, which are not in this repository |
+| `test_reductions.py`, `A1r/test_reductions_a1r.py`, `exp3_windowed/test_a2w.py`, `exp3_windowed/test_windowed_diversity.py` | Correctness checks: each new arm must reduce exactly to an earlier arm when its new parameter is switched off |
 | `results/` | Evaluation and analysis outputs (per-episode training histories are not included, see below) |
 | `checkpoints/` | Only the `best.pt` model for each arm and seed |
 | `docs/` | Supporting notes |
@@ -56,9 +63,11 @@ Example training run (Experiment 2, seed 42):
 ```bash
 .venv/bin/python test_reductions.py
 .venv/bin/python A1r/test_reductions_a1r.py
+.venv/bin/python exp3_windowed/test_a2w.py
+.venv/bin/python exp3_windowed/test_windowed_diversity.py
 ```
 
-Both scripts run short training runs in a throwaway copy of the project and never touch `results/` or `checkpoints/`.
+These scripts run short training runs in a throwaway copy of the project and never touch `results/` or `checkpoints/`.
 
 ## Not included in this repository
 
