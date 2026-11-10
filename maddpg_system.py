@@ -11,7 +11,7 @@ from models.critic import CentralizedCritic
 
 # The learner used by the baseline, Exp 2 and Exp 3 arms.
 class MADDPGSystem:
-    # Build the actor, twin critics, their target copies and optimisers.
+    # Build the actor, double critics, their target copies and optimisers.
     def __init__(
         self,
         n_agents,
