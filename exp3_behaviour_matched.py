@@ -1,30 +1,9 @@
-"""
-exp3_behaviour_matched.py
-
-THE BEHAVIOURAL METRICS, COMPARED AT MATCHED COMPETENCE.
-
-Why this file exists
---------------------
-exp3_compare_a2_a2c.py section E compared the behavioural metrics
-over the LAST 25% OF TRAINING. That is not a fair comparison: at
-the end of training A2 sits near -35.7 and A2c near -32.0, so the
-arms are at different points on the competence curve -- and the
-hysteresis result already established that a MORE COLLAPSED policy
-scores as MORE differentiated at the same return. Any apparent
-diversity advantage measured at end-of-training may be nothing but
-the difference in how far each arm has collapsed.
-
-This script repeats the comparison the way the token measure is
-already handled: at MATCHED RETURN, on the ascending branch, over a
-grid of targets spanning the arms' common range. Same control, same
-logic, applied to the measure family that was left unmatched.
-"""
 import numpy as np
 
 S = [42, 128, 456, 789]
 ARMS = [("A2", "beta_3"), ("A2c", "beta_3_augcritic")]
-K = 1000          # smoothing window, episodes
-TOL = 0.25        # reward units a match must fall within
+K = 1000
+TOL = 0.25
 W = 72
 
 
@@ -44,7 +23,6 @@ def load(arm, seed):
 
 
 def match(r, target):
-    """Index on the ASCENDING branch closest to target return."""
     peak = int(np.argmax(r))
     asc = r[:peak + 1]
     if len(asc) == 0:

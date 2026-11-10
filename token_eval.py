@@ -1,19 +1,3 @@
-"""
-token_eval.py
-
-Computes the Experiment-3 token diversity measure D = I(X;Z) on the
-SAME 200 held-out layouts already used for the reward evaluation, for
-three already-trained conditions. No training. The point is to test
-whether the Experiment-2 diversity null is specific to the
-action-space metric family (cosine / Euclidean / temporal r) or holds
-at the role level too.
-
-Tokens are the nearest-landmark index read from each agent's own
-observation, obs[4:10], taken from next_observations so every token
-reflects at least one action -- exactly the convention train_exp3.py
-uses, so these numbers are directly comparable to what Exp 3 will log.
-"""
-
 import os
 import argparse
 import numpy as np
@@ -28,7 +12,6 @@ from token_diversity import (
 
 def run(env, maddpg, layout_seeds, deterministic, repeats, torch_seed,
         n_perm):
-
     torch.manual_seed(torch_seed)
     rng = np.random.default_rng(torch_seed)
 
@@ -36,7 +19,6 @@ def run(env, maddpg, layout_seeds, deterministic, repeats, torch_seed,
 
     for layout_seed in layout_seeds:
         for _ in range(repeats):
-
             observations = env.reset(seed=layout_seed)
             tokens, total = [], 0.0
 
@@ -46,14 +28,13 @@ def run(env, maddpg, layout_seeds, deterministic, repeats, torch_seed,
                 )
                 observations, reward, term, trunc, _ = env.step(actions)
 
-                # next_observations: the token reflects the action just taken
                 tokens.append(tokenise(observations))
                 total += reward
 
                 if term or trunc:
                     break
 
-            tokens = np.asarray(tokens)                # [T, n_agents]
+            tokens = np.asarray(tokens)
             d_bits, d_norm, f = episode_diversity(tokens)
 
             m, _ = permutation_null(
@@ -87,7 +68,6 @@ def main():
 
     os.makedirs(args.out_dir, exist_ok=True)
 
-    # identical to evaluate_baseline.py -- disjoint from every training block
     layout_seeds = [900_000_000 + i for i in range(args.layouts)]
 
     print(f"D bound = log2(min(N,|A|)) = "
@@ -116,10 +96,6 @@ def main():
                 hidden_dim=c["hidden_dim"],
                 gamma=c["gamma"], tau=c["tau"],
                 twin_critics=c.get("twin_critics", True),
-                # Rebuilt from the file so an augmented-critic
-                # checkpoint (arm A2c, context_dim = 9) loads with the
-                # right critic shape. Absent in every pre-Sept-2026
-                # checkpoint, where 0 is the correct answer.
                 context_dim=c.get("context_dim", 0),
                 device="cpu",
             )
@@ -161,9 +137,6 @@ def main():
               f"   null = {n.mean():.4f}"
               f"   excess = {(d - n).mean():+.4f}\n")
 
-    # -----------------------------------------------------
-    # PAIRED COMPARISON against the first condition listed
-    # -----------------------------------------------------
     labels = [s.split(":")[0] for s in args.conditions]
     base = labels[0]
     print("=" * 72)

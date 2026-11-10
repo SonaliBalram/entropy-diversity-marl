@@ -1,29 +1,3 @@
-"""
-test_a2w.py  --  pre-launch checks for train_a2w.py.  Run on your Mac, from
-baseline_fixed/, AFTER block4_checks.py has finished:
-
-    python exp3_windowed/test_a2w.py
-
-Every run happens in a throwaway mirror folder (symlinks to your code, its own
-empty results/ and checkpoints/), so your real results are never touched.
-Takes roughly 3-5 minutes. The pass rules below were fixed before any run.
-
-  CHECK 1  --n-windows 1 reproduces the OLD A2 (exp3/train_exp3.py --beta 3)
-           Proves everything except the measure is unchanged.
-           PASS: identical through warmup (episodes 1-200); within 1e-6 over
-           episodes 201-300 (the two D formulas can differ in the last
-           floating-point digit, and learning can grow that slightly).
-  CHECK 2  --beta 0 reproduces the BASELINE (train_baseline.py) through warmup
-           PASS: identical on episodes 1-200. Divergence is EXPECTED from
-           episode 201, because held transitions change the buffer size at
-           the first update (the known, documented effect).
-  CHECK 3  the bonus lands where it should (A2, 5 windows)
-           PASS: shaped - unshaped = 3 * D_win_norm on every episode, and the
-           saved tokens reproduce the logged D.
-  CHECK 4  A2c runs: the per-episode context assertion never fires, losses
-           are finite.
-"""
-
 import os
 import sys
 import tempfile
@@ -34,7 +8,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
-from windowed_diversity import windowed_diversity  # noqa: E402
+from windowed_diversity import windowed_diversity
 
 SKIP = {"results", "checkpoints", "logs", ".git", ".venv", "archive", ".reduction_test"}
 COMMON = ["--seed", "42", "--print-every", "100000"]
@@ -68,7 +42,6 @@ def main():
     print(f"Mirror folder (throwaway): {mirror}\n")
     ok_all = True
 
-    # ---------- CHECK 1 ----------
     print("CHECK 1  --n-windows 1 vs old train_exp3.py (beta 3, 300 episodes)")
     run(mirror, "exp3/train_exp3.py",
         ["--beta", "3", "--episodes", "300", "--batch-size", "256", "--update-every", "2"])
@@ -97,7 +70,6 @@ def main():
           f"   {'(bit-identical)' if exact else ''}")
     print(f"  CHECK 1: {'PASS' if ok1 else 'FAIL'}\n")
 
-    # ---------- CHECK 2 ----------
     print("CHECK 2  --beta 0 vs train_baseline.py (250 episodes)")
     run(mirror, "train_baseline.py",
         ["--episodes", "250", "--batch-size", "256", "--update-every", "2"])
@@ -113,7 +85,6 @@ def main():
           f"(expected 201 or later)")
     print(f"  CHECK 2: {'PASS' if ok2 else 'FAIL'}\n")
 
-    # ---------- CHECK 3 ----------
     print("CHECK 3  bonus placement, A2 with 5 windows (250 episodes)")
     run(mirror, "exp3_windowed/train_a2w.py", ["--beta", "3", "--episodes", "250"])
     un = load(mirror, "beta_3_w5", "episode_rewards")
@@ -129,7 +100,6 @@ def main():
           f"tokens reproduce D: {e_tok:.2e}   mean windowed D = {dn.mean():.3f}")
     print(f"  CHECK 3: {'PASS' if ok3 else 'FAIL'}\n")
 
-    # ---------- CHECK 4 ----------
     print("CHECK 4  A2c runs with the 11-number context (250 episodes)")
     run(mirror, "exp3_windowed/train_a2w.py",
         ["--beta", "3", "--episodes", "250", "--augment-critic"])

@@ -1,61 +1,3 @@
-"""
-evaluate_checkpoints.py
-
-THE CONTROLLED TEST OF THE HOMOGENISATION HYPOTHESIS.
-
-Why this script exists
-----------------------
-Two earlier attempts to link behavioural homogenisation to
-performance were both flawed:
-
-  1. Correlating cos against reward across TRAINING episodes.
-     Every episode has a different layout, so layout
-     difficulty confounds it. On 600 episodes it gave -0.49;
-     on the full 50,000 it gave -0.028. The early signal was
-     driven by a handful of collapse episodes during unstable
-     early training.
-
-  2. Correlating within a fixed layout across repeated
-     rollouts of ONE policy. Sound in principle, but vacuous
-     in practice: the trained policy's sigma collapses to the
-     floor (0.0067), so all rollouts on a layout are the same
-     rollout. Within-layout reward std was 0.045 against a
-     between-layout std of 8.7 -- no variation to correlate.
-
-This script fixes both. It evaluates the CHECKPOINT SERIES --
-policies saved at episodes 2000, 4000, ... 50000 -- on the
-SAME fixed layouts.
-
-  * Layout difficulty is controlled: every checkpoint sees an
-    identical set of starting configurations.
-  * The independent variable genuinely varies: cos moved from
-    0.017 to 0.085 over training, so the checkpoints span a
-    real range of behavioural homogeneity.
-
-Two statistics are reported:
-
-  ACROSS-CHECKPOINT correlation
-      One (mean cos, mean reward) point per checkpoint,
-      correlated over checkpoints. Simple, but confounded
-      with training progress: later checkpoints are both more
-      homogeneous AND (here) worse, so a negative correlation
-      could reflect the degradation rather than the
-      homogenisation.
-
-  WITHIN-LAYOUT, ACROSS-CHECKPOINT correlation
-      For each layout separately, correlate cos against
-      reward across the checkpoints, then Fisher-z average
-      over layouts. Layout is held exactly constant, so this
-      is the cleanest available estimate. It is still
-      OBSERVATIONAL, not causal -- training stage remains a
-      common cause of both variables. State it that way.
-
-Usage
------
-    python evaluate_checkpoints.py --seed 42
-    python evaluate_checkpoints.py --seed 42 --layouts 200 --stochastic
-"""
-
 import argparse
 import os
 import re
@@ -82,14 +24,9 @@ METRIC_KEYS = [
 
 
 def find_checkpoints(directory):
-    """
-    Return [(label, sort_key, path)] ordered by training episode.
-    ckpt_ep<N>.pt sort by N; best.pt and final.pt are appended.
-    """
     out = []
 
     for name in os.listdir(directory):
-
         if not name.endswith(".pt"):
             continue
 
@@ -110,11 +47,6 @@ def find_checkpoints(directory):
 
 
 def evaluate_one(ckpt_path, layout_seeds, deterministic, torch_seed):
-    """
-    Run one checkpoint over every layout.
-    Returns (rewards[L], metrics{key: array[L]}).
-    """
-
     ckpt = torch.load(ckpt_path, map_location="cpu")
 
     env = MPEEnvironment(
@@ -128,10 +60,6 @@ def evaluate_one(ckpt_path, layout_seeds, deterministic, torch_seed):
         action_dim=ckpt.get("action_dim", 5),
         hidden_dim=ckpt.get("hidden_dim", 128),
         twin_critics=ckpt.get("twin_critics", True),
-        # Rebuilt from the file so an augmented-critic
-        # checkpoint (arm A2c, context_dim = 9) loads with the
-        # right critic shape. Absent in every pre-Sept-2026
-        # checkpoint, where 0 is the correct answer.
         context_dim=ckpt.get("context_dim", 0),
         device="cpu",
     )
@@ -151,12 +79,10 @@ def evaluate_one(ckpt_path, layout_seeds, deterministic, torch_seed):
     metrics = {k: np.full(L, np.nan) for k in METRIC_KEYS}
 
     for li, seed in enumerate(layout_seeds):
-
         obs = env.reset(seed=seed)
         total = 0.0
 
         while True:
-
             actions = maddpg.act(obs, deterministic=deterministic)
 
             instant.record(actions)
@@ -198,7 +124,6 @@ def fisher_z_mean(correlations):
 
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--checkpoint-root", type=str,
@@ -226,7 +151,6 @@ def main():
             f"produced by the current train_baseline.py. Re-run the seed."
         )
 
-    # Same layouts as evaluate_baseline.py, so numbers compare.
     layout_seeds = [900_000_000 + i for i in range(args.layouts)]
 
     print("=" * 78)
@@ -241,7 +165,6 @@ def main():
     all_metrics = {k: [] for k in METRIC_KEYS}
 
     for label, _, path in checkpoints:
-
         rew, met = evaluate_one(
             path, layout_seeds,
             deterministic=not args.stochastic,
@@ -260,7 +183,6 @@ def main():
               f"{np.nanmean(met['correlation_mean']):8.3f} "
               f"{np.nanmean(met['mean_sigma']):8.4f}", flush=True)
 
-    # [n_checkpoints, n_layouts]
     Rew = np.array(all_rewards)
     Met = {k: np.array(v) for k, v in all_metrics.items()}
 

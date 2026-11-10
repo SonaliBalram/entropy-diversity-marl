@@ -1,138 +1,3 @@
-"""
-train_exp3.py
-
-Experiment 3: entropy at the TRAJECTORY level.
-
-    Experiment 1:   J = E[Q(o, a)]
-    Experiment 2:   J = E[Q(o, a)] + alpha * H(pi(.|o))
-    Experiment 3:   J = E[Q(o, a)]           + beta * D(tau)
-
-D is the tokenised trajectory diversity defined in
-../token_diversity.py:
-
-    D = H(f_bar) - (1/N) sum_i H(f_i)    = I(X ; Z)
-
-the mutual information between agent identity and behaviour
-token, normalised by log2 min(N, |A|) into [0, 1].
-
-WHAT CHANGES RELATIVE TO train_exp2.py
---------------------------------------
-1. --beta replaces --alpha as the required flag. alpha now
-   defaults to 0.0, so Experiment 3 moves D only while
-   Experiment 2 moves sigma only, and the two arms are
-   separable. Running with --beta 0 --alpha a is
-   BIT-IDENTICAL to Experiment 2, and --beta 0 --alpha 0 to
-   Experiment 1, for the whole warmup window (200 episodes at
-   WARMUP_STEPS = 5000 and MAX_CYCLES = 25), where no gradient
-   update occurs. Verified on all 41 logged arrays.
-
-   From the first update the runs diverge, by construction.
-   The deferred write in (2) leaves this buffer up to
-   MAX_CYCLES smaller during an episode, and
-   ReplayBuffer.sample draws its indices from
-   rng.integers(0, self.size), so a different size gives
-   different mini-batches from an identical RNG state.
-   Measured: at global_step 5000 the Experiment 2 buffer holds
-   5000 transitions and this one 4975. The deficit is at most
-   25 -- 0.5% of the buffer at the first update, under 0.05%
-   by episode 2000 -- and it changes only WHEN transitions
-   become visible, never which ones are stored.
-
-   ../test_reductions.py checks both halves of this: the exact
-   agreement inside the warmup window, and that the divergence
-   begins at exactly the first learning episode. A different
-   boundary would mean something other than the deferred write
-   is changing the run, and is worth investigating before an
-   arm is launched.
-
-2. Transitions are HELD for the length of the episode instead
-   of being written to the replay buffer as they occur. D is a
-   function of the whole episode, so the terminal reward is
-   not known until the episode ends. The buffer receives
-   exactly the same transitions in the same order, at most 25
-   steps later.
-
-        r'_t = r_t                for t < T
-        r'_T = r_T + beta * D     (--bonus-schedule terminal)
-
-3. The UNSHAPED task return is tracked separately and is what
-   gets reported and what best.pt is selected on, so
-   Experiments 1, 2 and 3 are compared on the same number.
-   The shaped return is logged alongside it, never instead.
-
-4. D is logged every episode, along with the 3x3 token
-   frequency matrix f it was computed from. f is the episode
-   behaviour descriptor phi, so the secondary robustness
-   check H(phi) can be estimated offline from the logged
-   descriptors -- no rolling archive during training, and no
-   non-stationarity.
-
-WHAT DOES NOT CHANGE
---------------------
-The actor, its inputs and the algorithm. D is not
-differentiable through the environment and does not decompose
-over timesteps, so it enters as a terminal shaped reward, NOT
-in the actor loss. Under CTDE the deployed policy stays
-byte-identical in architecture to Experiments 1 and 2, which
-is what makes the comparison mean anything.
-
-FALSIFIABLE CHECK, STATED BEFORE THE RUNS
------------------------------------------
-Tokens here come from the REALISED positions. At alpha = 0
-sigma sits at the 0.0067 floor, far below the scale that moves
-an agent across a Voronoi boundary between landmarks, so
-quantisation discards the sampling noise outright. If sigma
-RISES during an Experiment 3 run, the bonus is being gamed
-through action noise rather than through behaviour -- that is
-a result to investigate, not a result to report. The `sig`
-column in the log is the monitor for it.
-
-Results go to results/beta_<value>/seed_<seed>/, so neither
-the Experiment 1 tree under results/baseline/ nor the
-Experiment 2 tree under results/alpha_<value>/ is touched.
-
-CORRECTIONS RELATIVE TO THE PREVIOUS VERSION
---------------------------------------------
-1. env.step() now returns 5 values and only `terminated`
-   goes into the replay buffer. Previously `terminated or
-   truncated` was stored, which cut the Bellman bootstrap at
-   every time limit and stalled the critic at roughly a
-   fifth of the true value scale.
-
-2. episode_seed = SEED * 1_000_000 + episode.
-   The previous `SEED + episode` made the five runs share
-   almost all their environment layouts: seeds 42 and 128
-   overlapped on 49,914 of 50,000 episodes (99.8%), and
-   across all five seeds only 50,958 distinct layouts were
-   drawn out of 250,000 episodes. The runs therefore differed
-   only in network initialisation and sampling noise, which
-   is why the across-seed std (1.678) looked implausibly
-   small. It was not measuring seed variability.
-
-3. Warmup now takes UNIFORM RANDOM actions rather than
-   untrained-policy actions, so the initial buffer covers the
-   action space instead of the narrow band the freshly
-   initialised network happens to produce.
-
-4. UPDATE_EVERY added. One gradient update per environment
-   step at batch 1024 is 1.25M updates per seed, measured at
-   39.8 ms each on CPU: ~13.8 h per seed, ~69 h for five
-   seeds. The startup banner now prints this estimate before
-   committing.
-
-5. Periodic checkpointing, so a crash at episode 40,000 does
-   not lose the run.
-
-6. All three behaviour metric families are now actually
-   recorded. Previously only InstantaneousBehaviourMetrics
-   was imported; TemporalBehaviourMetrics and
-   PolicyDivergenceMetrics existed but were never called.
-
-7. mean_q is logged against the empirical discounted return,
-   which is the single diagnostic that catches a broken
-   critic.
-"""
-
 import os
 import sys
 import time
@@ -143,16 +8,6 @@ from collections import deque
 import numpy as np
 import torch
 
-# =========================================================
-# LOCATE THE PROJECT FOLDER
-# =========================================================
-#
-# This script lives in a subfolder, but the algorithm modules
-# (maddpg_system.py, models/, environment.py, ...) live one
-# level up. Add that folder to the import path so the imports
-# below resolve, and anchor the output directories to it so
-# results land in the SHARED results/ tree no matter which
-# directory the script is launched from.
 
 PROJECT_ROOT = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
@@ -174,10 +29,6 @@ from token_diversity import (
     max_diversity,
 )
 
-
-# =========================================================
-# ARGUMENTS
-# =========================================================
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--seed", type=int, default=42)
@@ -246,10 +97,6 @@ def set_seed(seed):
 set_seed(SEED)
 
 
-# =========================================================
-# CONFIGURATION
-# =========================================================
-
 N_AGENTS = 3
 OBSERVATION_DIM = 18
 ACTION_DIM = 5
@@ -267,51 +114,29 @@ TAU = 0.005
 LR_ACTOR = 1e-4
 LR_CRITIC = 1e-3
 
-# Raised from 1.0: measured pre-clip critic gradient norms sit
-# at 0.2-3.3, so a clip of 1.0 fired on most updates.
-# update() now logs the pre-clip norms so this can be tuned
-# from data.
 GRAD_CLIP_NORM = 10.0
 HUBER_DELTA = 10.0
 
-# Clipped double-Q. Single-critic MADDPG was measured to
-# diverge here (Q drifted to -0.03 against a true return of
-# -22.8 while reward degraded). See maddpg_system.py note (e).
-# Set TWIN_CRITICS = False to reproduce that divergence.
 TWIN_CRITICS = True
 POLICY_DELAY = 2
 
-# Baseline definition: NO entropy bonus. The actor maximises
-# E[Q(s,a)] only. Experiments 2-5 change this and nothing else.
 ALPHA = args.alpha
 
-# Trajectory-level term. BETA multiplies the NORMALISED D, so
-# it is directly in reward units: the largest bonus a single
-# episode can earn.
 BETA = args.beta
 BONUS_SCHEDULE = args.bonus_schedule
 N_LANDMARKS = 3
 D_MAX_BITS = max_diversity(N_AGENTS, N_LANDMARKS)
 
-# Width of the critic's extra context vector. 0 is arm A2 and
-# leaves the critic bit-identical to Experiments 1 and 2.
 AUGMENT_CRITIC = args.augment_critic
 CONTEXT_DIM = (N_AGENTS * N_LANDMARKS) if AUGMENT_CRITIC else 0
 
 DEVICE = "cpu"
 
-# Results are separated by beta so Experiment 3 cannot
-# overwrite the Experiment 1 or Experiment 2 trees.
 EXPERIMENT = (
     f"beta_{BETA:g}" if ALPHA == 0.0
     else f"beta_{BETA:g}_alpha_{ALPHA:g}"
 )
 
-# Every setting that changes what the run IS must appear in the
-# directory name, or two different experiments silently write to
-# the same tree. `spread` was previously missing from this name,
-# so a terminal and a spread run at the same beta overwrote each
-# other; `augcritic` would have had the same problem.
 if BONUS_SCHEDULE != "terminal":
     EXPERIMENT += f"_{BONUS_SCHEDULE}"
 if AUGMENT_CRITIC:
@@ -322,10 +147,6 @@ CHECKPOINT_DIR = os.path.join(PROJECT_ROOT, "checkpoints", EXPERIMENT, f"seed_{S
 os.makedirs(RESULTS_DIR, exist_ok=True)
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
-
-# =========================================================
-# SETUP
-# =========================================================
 
 env = MPEEnvironment(n_agents=N_AGENTS, max_cycles=MAX_CYCLES)
 
@@ -362,14 +183,8 @@ divergence_metrics = PolicyDivergenceMetrics(N_AGENTS, ACTION_DIM)
 
 action_rng = np.random.default_rng(SEED)
 
-# Dedicated RNG for the permutation null, so adding or removing
-# null evaluations cannot shift the action or replay streams.
 null_rng = np.random.default_rng(SEED + 7_000_000)
 
-
-# =========================================================
-# STORAGE
-# =========================================================
 
 episode_rewards = []
 episode_shaped_rewards = []
@@ -397,15 +212,10 @@ behaviour_history = []
 global_step = 0
 update_count = 0
 
-# Best-checkpoint tracking.
 best_reward = -float("inf")
 best_episode = -1
 BEST_BURN_IN = 2000
 
-
-# =========================================================
-# CHECKPOINT METADATA (written into every saved file)
-# =========================================================
 
 CHECKPOINT_METADATA = {
     "seed": SEED,
@@ -432,10 +242,6 @@ CHECKPOINT_METADATA = {
     "twin_critics": TWIN_CRITICS,
 }
 
-
-# =========================================================
-# BANNER
-# =========================================================
 
 print("-" * 64)
 print(f"MADDPG + TRAJECTORY DIVERSITY  (Experiment 3, beta = {BETA:g})")
@@ -465,15 +271,9 @@ print(f"  {'Planned updates':24s}: {planned_updates:,}")
 print("-" * 64)
 
 
-# =========================================================
-# TRAINING LOOP
-# =========================================================
-
 start_time = time.time()
 
 for episode in range(NUM_EPISODES):
-
-    # Disjoint seed blocks per run -- see correction (2).
     episode_seed = SEED * 1_000_000 + episode
 
     observations = env.reset(seed=episode_seed)
@@ -482,27 +282,14 @@ for episode in range(NUM_EPISODES):
     episode_steps = 0
     step_rewards = []
 
-    # Held transitions and the episode's token string. Both
-    # are cleared at every reset.
     pending = []
     episode_tokens = []
 
-    # Running count matrix n_i(x), agents x landmarks, reset at
-    # every episode. This is the 9-integer sufficient statistic
-    # for D: at t = T, n_i(x)/T is exactly the frequency matrix
-    # f that the bonus is computed from.
     token_counts = np.zeros((N_AGENTS, N_LANDMARKS), dtype=np.int64)
 
     while True:
-
         global_step += 1
         episode_steps += 1
-
-        # -------------------------------------------------
-        # 1. ACTION
-        # -------------------------------------------------
-        # Uniform random during warmup so the initial buffer
-        # covers the action space -- see correction (3).
 
         if global_step < WARMUP_STEPS:
             actions = action_rng.random(
@@ -511,19 +298,11 @@ for episode in range(NUM_EPISODES):
         else:
             actions = maddpg.act(observations, deterministic=False)
 
-        # -------------------------------------------------
-        # 2. RECORD BEHAVIOUR
-        # -------------------------------------------------
-
         instant_metrics.record(actions)
         temporal_metrics.record(actions)
 
         means, stds = maddpg.policy_params(observations)
         divergence_metrics.record(means, stds)
-
-        # -------------------------------------------------
-        # 3. STEP
-        # -------------------------------------------------
 
         (
             next_observations,
@@ -533,45 +312,8 @@ for episode in range(NUM_EPISODES):
             info
         ) = env.step(actions)
 
-        # -------------------------------------------------
-        # 3b. TOKENISE
-        # -------------------------------------------------
-        #
-        # One symbol per agent per timestep: which landmark is
-        # it nearest. Read straight out of the relative
-        # landmark block of the agent's own observation, so the
-        # token is a function of what the agent can see and no
-        # reach into env.unwrapped.world is needed.
-        #
-        # Tokens come from next_observations, i.e. states
-        # s_1..s_T, so every symbol reflects at least one
-        # action. s_0 is the random initial layout and carries
-        # no information about the policy.
-
         token_t = tokenise(next_observations, N_LANDMARKS)
         episode_tokens.append(token_t)
-
-        # -------------------------------------------------
-        # 3b-ii. CRITIC CONTEXT  (arm A2c only)
-        # -------------------------------------------------
-        #
-        # c_t is the running count matrix BEFORE this step's
-        # token, c_{t+1} the same matrix AFTER it, both scaled
-        # by 1/T. Two things follow from the 1/T scaling:
-        #
-        #   * every entry lies in [0, 1], so no feature
-        #     normalisation is needed alongside the raw
-        #     observations, and
-        #   * each agent's row sums to t/T, so the episode
-        #     PHASE is recoverable from the context itself and
-        #     no separate time feature has to be added. That
-        #     matters: a count of 4 means something different
-        #     at t = 5 than at t = 24, and without phase the
-        #     critic could not tell those apart.
-        #
-        # The transition needs BOTH because the Bellman target
-        # evaluates the target critic at (s', a'), which must
-        # be paired with c'.
 
         if CONTEXT_DIM:
             ctx_before = token_counts.reshape(-1) / MAX_CYCLES
@@ -579,20 +321,6 @@ for episode in range(NUM_EPISODES):
             ctx_after = token_counts.reshape(-1) / MAX_CYCLES
         else:
             ctx_before = ctx_after = None
-
-        # -------------------------------------------------
-        # 3c. HOLD THE TRANSITION
-        # -------------------------------------------------
-        #
-        # D is a function of the WHOLE episode, so the terminal
-        # reward is not known until the episode ends.
-        # Transitions are held for at most MAX_CYCLES steps and
-        # written below in one block with the bonus attached.
-        # The buffer receives exactly the same transitions in
-        # the same order; only the write is deferred.
-        #
-        # `terminated` is still the TRUE termination flag,
-        # never `terminated or truncated` -- correction (1).
 
         pending.append(
             [observations, actions, reward,
@@ -603,16 +331,11 @@ for episode in range(NUM_EPISODES):
         observations = next_observations
         episode_reward += reward
 
-        # -------------------------------------------------
-        # 4. UPDATE
-        # -------------------------------------------------
-
         if (
             len(replay_buffer) >= BATCH_SIZE
             and global_step >= WARMUP_STEPS
             and global_step % UPDATE_EVERY == 0
         ):
-
             info_update = maddpg.update(
                 replay_buffer.sample(BATCH_SIZE)
             )
@@ -630,37 +353,12 @@ for episode in range(NUM_EPISODES):
         if terminated or truncated:
             break
 
-    # =====================================================
-    # END OF EPISODE -- THE TRAJECTORY-LEVEL BONUS
-    # =====================================================
-    #
-    #     D      = H(f_bar) - (1/N) sum_i H(f_i)   in bits
-    #     D_norm = D / log2 min(N, |A|)            in [0, 1]
-    #
-    #     r'_t = r_t                    for t < T
-    #     r'_T = r_T + beta * D_norm
-    #
-    # D is not differentiable through the environment and does
-    # not decompose over timesteps, so it is paid terminally
-    # and never enters the actor loss.
-
-    tokens = np.asarray(episode_tokens)              # [T, N]
+    tokens = np.asarray(episode_tokens)
 
     d_bits, d_norm, token_f = episode_diversity(
         tokens, n_landmarks=N_LANDMARKS
     )
 
-    # THE CLAIM THE AUGMENTED ARM RESTS ON, CHECKED EVERY
-    # EPISODE (it costs nine float comparisons).
-    #
-    # The context attached to the LAST transition must equal
-    # the frequency matrix the bonus was computed from. If it
-    # does, the terminal reward is a deterministic function of
-    # the critic's own input and the augmented arm is doing what
-    # it claims. If it ever does not -- an off-by-one in when
-    # the counts are incremented, a missed reset -- the run is
-    # measuring something else and should stop here rather than
-    # produce a plausible-looking curve.
     if CONTEXT_DIM:
         assert np.allclose(
             pending[-1][6].reshape(N_AGENTS, N_LANDMARKS),
@@ -673,11 +371,6 @@ for episode in range(NUM_EPISODES):
     if BONUS_SCHEDULE == "terminal":
         pending[-1][2] += bonus
     else:
-        # Equal instalments. With gamma = 0.95 and T = 25 a
-        # terminal bonus reaches the first action attenuated by
-        # gamma^24 = 0.29. Spreading removes that attenuation
-        # at the cost of making r_t depend on the episode's
-        # future, which is why `terminal` is the default.
         share = bonus / len(pending)
         for transition in pending:
             transition[2] += share
@@ -689,25 +382,7 @@ for episode in range(NUM_EPISODES):
             ctx_t, next_ctx_t
         )
 
-    # step_rewards is rebuilt from the SHAPED rewards, because
-    # the critic is trained on r' and mean_q therefore
-    # estimates the shaped return. Q vs G stays a valid health
-    # check only if G is computed on the same reward the critic
-    # sees. episode_rewards below stays UNSHAPED and is the
-    # number reported against Experiments 1 and 2.
-
     step_rewards = [transition[2] for transition in pending]
-
-    # -----------------------------------------------------
-    # PERMUTATION NULL -- the empirical zero for D
-    # -----------------------------------------------------
-    #
-    # Shuffle the agent labels across the pooled token stream
-    # and recompute D. This preserves T, the alphabet and the
-    # pooled frequencies exactly, so what is left is the
-    # plug-in estimator's upward bias, measured rather than
-    # assumed. Reporting is D against D_shuffled, not against
-    # zero. It never enters the reward.
 
     if (episode + 1) % args.null_every == 0:
         null_mean, _ = permutation_null(
@@ -724,23 +399,6 @@ for episode in range(NUM_EPISODES):
     episode_diversity_bits.append(d_bits)
     episode_diversity_norm.append(d_norm)
     token_frequencies.append(token_f)
-
-    # -----------------------------------------------------
-    # DISCOUNTED RETURN-TO-GO FROM EVERY TIMESTEP
-    # -----------------------------------------------------
-    #
-    # G_t = sum_{k>=t} gamma^(k-t) r_k, computed backwards.
-    #
-    # mean_q is Q averaged over states drawn UNIFORMLY from
-    # the replay buffer, i.e. states at ALL timesteps. So the
-    # quantity it estimates is the MEAN of G_t over t, not
-    # G_0. Logging G_0 (as the previous version did) made Q
-    # look wrong by a factor of ~0.62 on this task and forced
-    # a mental correction when reading the log.
-    #
-    # `value_avg` is directly comparable to mean_q.
-    # `discounted` (= G_0) is kept because it is the natural
-    # "episode return" for reporting.
 
     running = 0.0
     returns_to_go = np.empty(len(step_rewards), dtype=np.float64)
@@ -761,8 +419,6 @@ for episode in range(NUM_EPISODES):
     record.update(temporal_metrics.get_episode_results())
     record.update(divergence_metrics.get_episode_results())
 
-    # Logged next to the other behaviour metrics so the
-    # analysis code finds them in the same place.
     record["token_diversity_bits"] = d_bits
     record["token_diversity_norm"] = d_norm
     behaviour_history.append(record)
@@ -771,21 +427,7 @@ for episode in range(NUM_EPISODES):
     temporal_metrics.reset()
     divergence_metrics.reset()
 
-    # =====================================================
-    # PROGRESS
-    # =====================================================
-
     if (episode + 1) % args.print_every == 0 or episode == 0:
-
-        # Per-episode line. Columns follow the original
-        # baseline's layout so runs stay comparable by eye,
-        # with the diagnostics added on the right.
-        #
-        # NOTE: Actor is EXACTLY -Q by construction
-        # (actor_loss = -q_val.mean()), so it carries no
-        # information beyond the Q column. Kept only for
-        # continuity with the earlier logs.
-
         line = (
             f"Episode {episode + 1:6d}"
             f" | Reward: {episode_reward:9.3f}"
@@ -794,13 +436,6 @@ for episode in range(NUM_EPISODES):
         )
 
         if mean_q_values:
-
-            # G is the discounted return-to-go averaged over
-            # every timestep, over the last REWARD_WINDOW
-            # episodes. This is exactly what mean_q estimates,
-            # so a healthy critic has Q ~= G. Q drifting ABOVE
-            # G is overestimation bias; far BELOW it is the
-            # underestimation that clipped double-Q can cause.
             emp = float(np.mean(episode_value_avg[-REWARD_WINDOW:]))
 
             line += (
@@ -821,34 +456,12 @@ for episode in range(NUM_EPISODES):
             f" | Avg{REWARD_WINDOW}: {running_mean_rewards[-1]:8.2f}"
         )
 
-        # ETA only occasionally, so it does not clutter a
-        # per-episode log.
         if (episode + 1) % 500 == 0:
             elapsed = time.time() - start_time
             rate = (episode + 1) / elapsed
             line += f" | ETA {(NUM_EPISODES - episode - 1) / rate / 3600:5.2f}h"
 
         print(line, flush=True)
-
-    # =====================================================
-    # PERIODIC CHECKPOINT
-    # =====================================================
-
-    # =====================================================
-    # CHECKPOINTS
-    # =====================================================
-    #
-    # Two kinds, and NEITHER overwrites a previous one:
-    #
-    #   ckpt_ep<N>.pt : a fixed grid, so any point on the
-    #                   learning curve can be revisited.
-    #   best.pt       : whichever policy had the highest
-    #                   rolling-100 reward so far.
-    #
-    # The previous version wrote a single latest.pt and
-    # overwrote it every time, so when seed 42 peaked at
-    # episode ~13,000 and then degraded 7.8 points, the good
-    # policy was gone by the end of the run.
 
     if (episode + 1) % args.checkpoint_every == 0:
         maddpg.save(
@@ -858,8 +471,6 @@ for episode in range(NUM_EPISODES):
             metadata=CHECKPOINT_METADATA,
         )
 
-    # Track the best policy. Burn-in guards against an early
-    # lucky window winning on a barely-trained network.
     if (
         episode + 1 >= BEST_BURN_IN
         and running_mean_rewards[-1] > best_reward
@@ -873,10 +484,6 @@ for episode in range(NUM_EPISODES):
                       "best_avg_reward": best_reward},
         )
 
-
-# =========================================================
-# SAVE
-# =========================================================
 
 print("-" * 64)
 print(f"Total environment steps : {global_step:,}")
@@ -908,9 +515,6 @@ for name, values in arrays.items():
         np.array(values)
     )
 
-# Behaviour history saved as a named-column archive so new
-# metrics can be added without breaking the column ordering
-# that a bare 2-D array would depend on.
 behaviour_keys = sorted(behaviour_history[0].keys())
 
 np.savez(
@@ -921,10 +525,6 @@ np.savez(
     }
 )
 
-# The episode behaviour descriptor phi, one 3x3 frequency
-# matrix per episode. D was computed from these; logging them
-# lets the secondary robustness check H(phi) be estimated
-# offline, with no rolling archive during training.
 np.save(
     os.path.join(RESULTS_DIR, "token_frequencies.npy"),
     np.asarray(token_frequencies)
@@ -938,10 +538,6 @@ print(f"Mean D over last 100 episodes: "
 
 MODEL_PATH = os.path.join(CHECKPOINT_DIR, "final.pt")
 
-# One save, not two. The previous version called
-# maddpg.save() and then immediately overwrote the file with
-# a second torch.save(), so the optimiser state was silently
-# lost. Metadata now rides along with the network state.
 maddpg.save(MODEL_PATH, metadata=CHECKPOINT_METADATA)
 
 print(f"Best policy: episode {best_episode} "

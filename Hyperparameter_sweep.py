@@ -1,36 +1,3 @@
-"""
-Hyperparameter_sweep.py
-
-Short pilot search over OPTIMISATION-level hyperparameters
-only (batch size, learning rates, tau, clipping, Huber delta).
-alpha stays 0 and the reward function is untouched, so the
-baseline definition is preserved.
-
-CORRECTIONS RELATIVE TO THE PREVIOUS VERSION
---------------------------------------------
-1. env.step() 5-tuple; only `terminated` is stored.
-
-2. episode_seed = seed * 1_000_000 + episode, so pilot seeds
-   do not share layouts with each other or with the full runs.
-
-3. UPDATE_EVERY exposed. The previous pilot was not cheap:
-   3000 episodes x 25 steps x 5 configs x 2 seeds = 750,000
-   updates, which at batch 1024 (39.8 ms measured) is ~8 hours
-   -- more than half a full training run, to rank five
-   candidates. The defaults here (1500 episodes,
-   update_every=4) bring that to well under an hour.
-
-4. Scoring now uses the MEAN OF PER-SEED STANDARD DEVIATIONS
-   rather than the std of the pooled tail. Pooling first
-   conflates within-seed noise (what is being optimised) with
-   between-seed offset (what is not).
-
-5. Configs 1-4 kept, config 0 relabelled honestly: with
-   grad_clip_norm=None and the old lr pair it is the
-   pre-optimisation control, and it is the ONLY fair
-   comparison point for claiming the tuning helped.
-"""
-
 import argparse
 import csv
 import random
@@ -44,7 +11,6 @@ from replay_buffer import ReplayBuffer
 
 
 CANDIDATE_CONFIGS = [
-    # pre-optimisation control
     {"batch_size": 128,  "lr_actor": 1e-3, "lr_critic": 1e-3,
      "tau": 0.01,  "grad_clip_norm": None, "huber_delta": 1.0},
 
@@ -65,7 +31,6 @@ CANDIDATE_CONFIGS = [
 def train_short(config, seed, num_episodes, update_every,
                 n_agents=3, observation_dim=18, action_dim=5,
                 max_cycles=25):
-
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -103,12 +68,10 @@ def train_short(config, seed, num_episodes, update_every,
     global_step = 0
 
     for episode in range(num_episodes):
-
         observations = env.reset(seed=seed * 1_000_000 + episode)
         episode_reward = 0.0
 
         while True:
-
             global_step += 1
 
             if global_step < warmup_steps:
@@ -153,12 +116,10 @@ def train_short(config, seed, num_episodes, update_every,
 
 def score_config(config, seeds, episodes, tail_episodes,
                  lam, update_every):
-
     means = []
     stds = []
 
     for seed in seeds:
-
         rewards = train_short(config, seed, episodes, update_every)
         tail = rewards[-tail_episodes:]
 
@@ -170,10 +131,8 @@ def score_config(config, seeds, episodes, tail_episodes,
 
     mean_r = float(np.mean(means))
 
-    # Mean of per-seed stds -- within-seed noise only.
     std_r = float(np.mean(stds))
 
-    # Reported separately so the two are never confused.
     between_seed = float(np.std(means))
 
     return {
@@ -185,7 +144,6 @@ def score_config(config, seeds, episodes, tail_episodes,
 
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--episodes", type=int, default=1500)
     parser.add_argument("--tail-episodes", type=int, default=300)

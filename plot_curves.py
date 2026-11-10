@@ -1,27 +1,3 @@
-"""
-plot_curves.py -- training curves for any set of arms, read from the
-.npy arrays every training script already saves. Nothing is re-run and
-no other file is touched.
-
-    python plot_curves.py                                   # A1 vs A1r
-    python plot_curves.py --arms baseline alpha_0.01        # Exp 1 vs Exp 2
-    python plot_curves.py --arms beta_3 beta_3_augcritic --bin 1000
-
-Each curve is the mean across seeds; the band is +/- 1 SD across seeds
-(n = 4, so the band shows seed-to-seed spread, not a confidence interval).
-
-Episode arrays (return, training D) are averaged in bins of --bin
-episodes. Update arrays (sigma, critic, Q, gate) are mapped to episodes
-with episode = update_step // MAX_CYCLES and averaged in the same bins,
-so every panel shares one x-axis.
-
-Return is ALWAYS the unshaped task return (episode_rewards.npy): the
-Exp 3 scripts keep the shaped return in a separate file.
-
-Output -> results/plots/<arm1>__<arm2>__.../  (overview.png plus one PNG
-per metric). Needs matplotlib:  pip install matplotlib
-"""
-
 import argparse
 import json
 import os
@@ -37,7 +13,7 @@ except ImportError:
                      "  source .venv/bin/activate && pip install matplotlib")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-MAX_CYCLES = 25                      # steps per episode, all arms
+MAX_CYCLES = 25
 
 LABELS = {
     "baseline":         "A0  (alpha = 0)",
@@ -54,8 +30,6 @@ COLOURS = {
     "beta_0_augcritic": "#9a7b2e",
 }
 
-# (file, title, y-label, kind)   kind: "ep" = one value per episode,
-#                                        "up" = one value per update
 METRICS = [
     ("episode_rewards",       "Task return (unshaped)",  "reward per episode", "ep"),
     ("policy_stds",           "Policy sigma",            "mean sigma (replay batch, 5 dims)", "up"),
@@ -69,7 +43,6 @@ METRICS = [
 
 
 def load_arm(arm, seeds, fname, kind, n_bins, bin_eps, alpha):
-    """Return an array [n_seeds, n_bins] or None if no seed has the file."""
     rows = []
     for s in seeds:
         p = os.path.join(HERE, "results", arm, f"seed_{s}", fname + ".npy")
@@ -88,7 +61,6 @@ def load_arm(arm, seeds, fname, kind, n_bins, bin_eps, alpha):
             b = np.minimum((steps // MAX_CYCLES) // bin_eps, n_bins - 1)
             b = b.astype(int)[: len(x)]
             if fname == "gate_geomeans":
-                # geometric mean within each bin, as a ratio to alpha
                 tot = np.bincount(b, np.log(x[: len(b)]), n_bins)
                 cnt = np.bincount(b, None, n_bins)
                 with np.errstate(invalid="ignore", divide="ignore"):

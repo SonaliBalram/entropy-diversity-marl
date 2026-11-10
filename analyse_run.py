@@ -1,18 +1,3 @@
-"""
-analyse_run.py
-
-Tests whether the extreme-negative-reward episodes are the
-BEHAVIOURALLY HOMOGENISED ones.
-
-If they are, the episode-level "noise" in the baseline is not
-an optimisation defect to be tuned away -- it is the
-homogenisation phenomenon this project exists to measure, and
-it should be reported as a result rather than smoothed out.
-
-Usage:
-    python analyse_run.py --results results/baseline/seed_42
-"""
-
 import argparse
 import os
 
@@ -20,7 +5,6 @@ import numpy as np
 
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--results", type=str,
                         default=os.path.join("results", "baseline", "seed_42"))
@@ -65,9 +49,6 @@ def main():
     rep("temporal correlation", corr)
     rep("policy sigma", sig)
 
-    # ------------------------------------------------------
-    # Worst vs best episodes
-    # ------------------------------------------------------
     k = max(5, len(r) // 20)
     worst = np.argsort(r)[:k]
     best = np.argsort(r)[-k:]
@@ -84,9 +65,6 @@ def main():
         a, b = np.nanmean(x[worst]), np.nanmean(x[best])
         print(f"  {name:24s} {a:10.4f} {b:10.4f} {b - a:+10.4f}")
 
-    # ------------------------------------------------------
-    # The headline test
-    # ------------------------------------------------------
     ok = np.isfinite(cos) & np.isfinite(r)
     thresh = np.nanpercentile(cos[ok], 90)
     homogenised = cos[ok] >= thresh

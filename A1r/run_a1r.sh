@@ -1,31 +1,7 @@
 #!/usr/bin/env bash
-#
-# run_a1r.sh -- arm A1r: ownership-gated entropy allocation.
-#
-# Same entropy budget as A1 (alpha = 0.01), redistributed across states
-# by a frozen gate built on two Voronoi diagrams:
-#
-#     alpha_eff,i = alpha * w_i / Z      w_i = 1 / (1 + exp(-G_i / kappa))
-#     G_i = max( g_i , -m_i )
-#
-# kappa and Z are read from results/a1r_pilot/a1r_constants.json and are
-# NEVER re-estimated. The pre-flight below refuses to start if that file
-# is missing, because choosing kappa after seeing training is exactly the
-# researcher degree of freedom the pre-registration exists to remove.
-#
-# Results -> results/a1r_both/seed_<S>/
-# Logs    -> A1r/a1r_both_seed<S>.log
-#
-# Usage:
-#     source .venv/bin/activate
-#     caffeinate -i ./A1r/run_a1r.sh      # -i stops idle sleep
-#
-# Safe to re-run: a seed whose results already exist is skipped, so an
-# interrupted sweep resumes where it stopped.
 
 set -u
 
-# the script lives in A1r/, the project root is one level up
 cd "$(dirname "$0")/.."
 
 SEEDS="42 128 456 789"
@@ -34,17 +10,9 @@ GATE="both"
 ALPHA=0.01
 ARM="a1r_${GATE}"
 
-# The comparability contract. Held at Experiment 2's settings, with
-# alpha_eff(o) as the single changed factor. train_a1r.py inherits
-# exp2's defaults of --batch-size 1024 --update-every 1, so passing 256
-# and 2 explicitly is the difference between a comparable arm and a
-# wasted overnight run.
 FLAGS="--alpha ${ALPHA} --gate ${GATE} --episodes ${EPISODES} \
        --batch-size 256 --update-every 2 --checkpoint-every 2000"
 
-# ----------------------------------------------------------------
-# PRE-FLIGHT
-# ----------------------------------------------------------------
 python3 - <<'PY' || exit 1
 import sys, os, json
 try:
@@ -93,8 +61,6 @@ for S in ${SEEDS}; do
     OUT="results/${ARM}/seed_${S}"
     LOG="A1r/${ARM}_seed${S}.log"
 
-    # Arrays are written only after training completes, so their
-    # presence means the seed finished rather than merely started.
     if [ -f "${OUT}/episode_rewards.npy" ]; then
         echo "[skip] seed ${S}: ${OUT}/episode_rewards.npy already exists"
         SUMMARY="${SUMMARY}
@@ -115,14 +81,12 @@ for S in ${SEEDS}; do
         echo "#"
     } > "${LOG}"
 
-    # shellcheck disable=SC2086
     python3 A1r/train_a1r.py ${FLAGS} --seed "${S}" >> "${LOG}" 2>&1
     RC=$?
     T1=$(date +%s)
     HOURS=$(python3 -c "print(f'{($T1 - $T0)/3600:.2f}')")
 
     if [ ${RC} -eq 0 ] && [ -f "${OUT}/episode_rewards.npy" ]; then
-        # the two things that can silently invalidate the arm
         BUDGET=$(python3 -c "
 import numpy as np
 g = np.load('${OUT}/gate_geomeans.npy')

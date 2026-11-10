@@ -1,31 +1,3 @@
-"""
-test_reductions_a1r.py  --  the four pre-registered A1r reduction checks.
-
-Same idea and the same throwaway symlink mirror as ../test_reductions.py,
-so the real results/ and checkpoints/ trees are never touched.
-
-  R1  --gate none is BIT-IDENTICAL to Experiment 2 on every logged array.
-      This is the check that makes the separate A1r copy of
-      maddpg_system.py safe: it proves the copy is the parent whenever
-      the gate is off.  It is also stronger than anything Exp 3 could
-      manage, because A1r holds no transitions and so cannot desynchronise
-      the replay buffer the way the deferred-write design did.
-
-  R2  Determinism: the same seed twice gives bit-identical output.
-
-  R3  The geometric mean of alpha_eff over the pilot's reference set
-      equals alpha.  This is the budget identity -- the thing that makes
-      A1r a REALLOCATION of A1's entropy rather than more or less of it.
-
-  R4  No reference sample has a target sigma outside the actor's clamps
-      [0.0067, 7.3891], so the allocation is never silently truncated by
-      LOG_STD_MIN / LOG_STD_MAX.
-
-  R5  kappa -> infinity collapses alpha_eff back onto alpha.
-
-    python A1r/test_reductions_a1r.py
-"""
-
 import os
 import sys
 import json
@@ -39,7 +11,7 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, "A1r"))
 
-from voronoi_gate import OwnershipGate, fit_log_z, LN10   # noqa: E402
+from voronoi_gate import OwnershipGate, fit_log_z, LN10
 
 SEED = 42
 EPISODES = 250
@@ -101,11 +73,6 @@ def rdir(experiment):
 
 
 def compare(a, b, label, skip=()):
-    """
-    Every array present in both must be bit-identical.  `skip` exists
-    because the A1r run logs two arrays Exp 2 does not; those are
-    absent from the intersection anyway, so it normally stays empty.
-    """
     A, B = load(a), load(b)
     shared = sorted((set(A) & set(B)) - set(skip))
     bad = [k for k in shared
@@ -131,7 +98,6 @@ def main():
     print(f"  {EPISODES} episodes, seed {SEED}, alpha {ALPHA}")
     print()
 
-    # -- R1 ----------------------------------------------------------
     print("R1  --gate none reproduces Experiment 2 bit-identically")
     train("exp2/train_exp2.py", ["--alpha", str(ALPHA)])
     train("A1r/train_a1r.py", ["--alpha", str(ALPHA), "--gate", "none"])
@@ -152,7 +118,6 @@ def main():
           f"log Z = {log_z:.6f}")
     print()
 
-    # -- R2 ----------------------------------------------------------
     print("R2  determinism at fixed seed")
     train("A1r/train_a1r.py", ["--alpha", str(ALPHA), "--gate", "both"])
     snap = os.path.join(WORK, "_run1")
@@ -162,7 +127,6 @@ def main():
     ok &= compare(snap, rdir("a1r_both"), "A1r run 1 vs run 2")
     print()
 
-    # -- R3 / R4 -----------------------------------------------------
     gp = os.path.join(HERE, "results", "a1r_pilot", "gaps.npz")
     if not os.path.exists(gp):
         print("R3-R5  SKIPPED: results/a1r_pilot/gaps.npz not found.")
@@ -187,6 +151,20 @@ def main():
           f"have spent")
     print()
 
+    print("R3b applied (clamped) geometric mean of alpha_eff is within 2% "
+          "of alpha")
+    cr = const["clamp_ratio"]
+    log_a_applied = (np.clip(log_a, np.log(ALPHA / cr), np.log(ALPHA * cr))
+                     if cr is not None else log_a)
+    geo_ap = float(np.exp(log_a_applied.mean()))
+    r3b = abs(geo_ap / ALPHA - 1.0) < 0.02
+    ok &= r3b
+    print(f"  [{'PASS' if r3b else 'FAIL'}] applied geometric mean = "
+          f"{geo_ap:.6f}  = {geo_ap / ALPHA:.4f} x alpha   "
+          f"({100 * np.mean(log_a_applied != log_a):.2f}% of samples "
+          f"clamped)")
+    print()
+
     print("R4  no reference sample lands outside the actor's clamps")
     sig_a1 = const["reference"]["a1_mean_sigma"]
     clamped = np.clip(a_eff, ALPHA / const["clamp_ratio"],
@@ -201,7 +179,6 @@ def main():
           f"the alpha_eff clamp before the sigma clamp could bind")
     print()
 
-    # -- R5 ----------------------------------------------------------
     print("R5  kappa -> infinity collapses back onto A1")
     big = 1e9
     huge = OwnershipGate(ALPHA, big, fit_log_z(G, big), mode=const["mode"])

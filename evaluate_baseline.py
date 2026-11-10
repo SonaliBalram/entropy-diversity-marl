@@ -1,42 +1,3 @@
-"""
-evaluate_baseline.py
-
-Splits within-seed reward variance into its two sources:
-environment layout, and the policy's own action sampling.
-
-CORRECTIONS RELATIVE TO THE PREVIOUS VERSION
---------------------------------------------
-1. PAIRED DESIGN. The previous version gave the stochastic
-   and deterministic passes DIFFERENT environment seeds
-   (offsets 10M and 20M). The two reward distributions then
-   differed in both the layouts AND the sampling, so their
-   std ratio was not attributable to sampling alone. Both
-   passes now use the SAME layout seeds, which makes the
-   comparison paired and the difference interpretable.
-
-2. PROPER VARIANCE DECOMPOSITION. Running K stochastic
-   rollouts on each of M fixed layouts lets the two sources
-   be separated directly rather than inferred from a ratio:
-
-       total variance = between-layout + within-layout
-       between-layout = environment / initial conditions
-       within-layout  = action sampling
-
-   This is a one-way ANOVA decomposition and is what the
-   write-up should quote.
-
-3. torch.manual_seed is now set, so the stochastic pass is
-   reproducible. It previously was not -- env.reset(seed=)
-   seeds the environment, not the policy's sampling.
-
-4. env.step() 5-tuple.
-
-5. Behavioural metrics are recorded DURING evaluation. The
-   diversity numbers that answer the research question should
-   come from the evaluated policy, not from the exploratory
-   actions taken during training.
-"""
-
 import os
 import argparse
 
@@ -52,22 +13,6 @@ from policy_divergence_behaviour import PolicyDivergenceMetrics
 
 def run_episodes(env, maddpg, layout_seeds, deterministic,
                  repeats=1, torch_seed=0, collect_behaviour=True):
-    """
-    Returns
-        rewards  : [n_layouts, repeats]
-        metrics  : dict of [n_layouts, repeats] arrays
-
-    The [layout, repeat] SHAPE is the point. Holding the
-    layout fixed and varying only the policy's sampling lets
-    the within-layout question be asked directly: on the SAME
-    starting configuration, do the rollouts where the agents
-    homogenise score worse? Layout difficulty is constant down
-    each row, so it cannot confound the answer -- which is
-    exactly the flaw in correlating these quantities across
-    training episodes, where every episode has a different
-    layout.
-    """
-
     torch.manual_seed(torch_seed)
 
     n_agents = maddpg.n_agents
@@ -82,14 +27,11 @@ def run_episodes(env, maddpg, layout_seeds, deterministic,
     metrics = {}
 
     for li, layout_seed in enumerate(layout_seeds):
-
         for rep in range(K):
-
             observations = env.reset(seed=layout_seed)
             total = 0.0
 
             while True:
-
                 actions = maddpg.act(
                     observations,
                     deterministic=deterministic
@@ -135,22 +77,9 @@ def run_episodes(env, maddpg, layout_seeds, deterministic,
 
 
 def within_layout_correlation(rewards, metric):
-    """
-    Correlation between a behaviour metric and reward,
-    computed WITHIN each layout and then averaged across
-    layouts (Fisher-z averaged, so correlations combine
-    properly rather than being averaged raw).
-
-    This is the confound-free version of the training-time
-    correlation. Layout difficulty is held constant, so a
-    non-zero value here means the behaviour itself is
-    associated with the outcome.
-    """
-
     zs = []
 
     for li in range(rewards.shape[0]):
-
         r = rewards[li]
         m = metric[li]
         ok = np.isfinite(r) & np.isfinite(m)
@@ -180,11 +109,6 @@ def summarize(rewards, label):
 
 
 def decompose(rewards):
-    """
-    One-way variance decomposition over layouts.
-
-    rewards : [n_layouts, n_repeats]
-    """
     layout_means = rewards.mean(axis=1)
     between = layout_means.var()
     within = rewards.var(axis=1).mean()
@@ -192,7 +116,6 @@ def decompose(rewards):
 
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--seeds", type=int, nargs="+",
                         default=[42, 128, 456, 789, 1000])
@@ -214,8 +137,6 @@ def main():
 
     os.makedirs(args.out_dir, exist_ok=True)
 
-    # Evaluation layouts are disjoint from every training
-    # block (training uses SEED * 1_000_000 + episode).
     layout_seeds = [900_000_000 + i for i in range(args.layouts)]
 
     pooled_stoch = []
@@ -224,7 +145,6 @@ def main():
     pooled_det_behaviour = {}
 
     for seed in args.seeds:
-
         ckpt_path = os.path.join(
             args.checkpoint_root, f"seed_{seed}", args.checkpoint_name
         )
@@ -257,22 +177,15 @@ def main():
             gamma=checkpoint["gamma"],
             tau=checkpoint["tau"],
             twin_critics=checkpoint.get("twin_critics", True),
-            # Rebuilt from the file so an augmented-critic
-            # checkpoint (arm A2c, context_dim = 9) loads with the
-            # right critic shape. Absent in every pre-Sept-2026
-            # checkpoint, where 0 is the correct answer.
             context_dim=checkpoint.get("context_dim", 0),
             device="cpu",
         )
 
-        # maddpg.load() handles both the single-critic and
-        # twin-critic checkpoint formats.
         maddpg.load(ckpt_path)
 
         maddpg.actor.eval()
         maddpg.critic.eval()
 
-        # --- stochastic: many repeats per layout ---
         stoch, stoch_behaviour = run_episodes(
             env, maddpg, layout_seeds,
             deterministic=False,
@@ -280,8 +193,6 @@ def main():
             torch_seed=seed,
         )
 
-        # --- deterministic: identical layouts, 1 repeat
-        #     (repeats would be identical by construction) ---
         det, det_behaviour = run_episodes(
             env, maddpg, layout_seeds,
             deterministic=True,
@@ -310,9 +221,6 @@ def main():
                 print(f"        {k:22s}: "
                       f"{np.nanmean(det_behaviour[k]):8.4f}")
 
-        # ---------------------------------------------
-        # WITHIN-LAYOUT TEST
-        # ---------------------------------------------
         print(f"      within-layout correlation with reward "
               f"({args.repeats} rollouts x {args.layouts} layouts):")
         for k in ["cosine_mean", "cosine_raw_mean",
@@ -329,11 +237,6 @@ def main():
             stochastic=stoch,
             deterministic=det,
             **{f"stoch_{k}": v for k, v in stoch_behaviour.items()},
-            # The deterministic pass is the sigma-INVARIANT one: every
-            # agent acts at its mean mu, so cosine/Euclidean on the
-            # physical force carry no sampling-noise term and are
-            # comparable across arms with different policy sigma.
-            # These are the numbers the diversity question rests on.
             **{f"det_{k}": v for k, v in det_behaviour.items()},
         )
 
@@ -349,10 +252,6 @@ def main():
             pooled_det_behaviour.setdefault(k, []).extend(
                 v.ravel().tolist()
             )
-
-    # =====================================================
-    # POOLED
-    # =====================================================
 
     all_stoch = np.concatenate([s.ravel() for s in pooled_stoch])
     all_det = np.concatenate([d.ravel() for d in pooled_det])

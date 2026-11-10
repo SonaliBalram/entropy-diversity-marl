@@ -1,75 +1,3 @@
-"""
-test_reductions.py
-
-Correctness guard for train_exp3.py, to be run before launching
-a real Experiment 3 arm.
-
-WHAT IT CHECKS AND WHY
-----------------------
-train_exp3.py claims two reductions:
-
-    --beta 0 --alpha a   should behave as Experiment 2
-    --beta 0 --alpha 0   should behave as Experiment 1
-
-Those claims are what makes Experiment 3 comparable to the arms
-it will be reported against, so they are worth testing rather
-than asserting. This script tests them exactly, and is honest
-about where exact equality stops holding and why.
-
-THE WARMUP WINDOW IS WHERE EXACT EQUALITY IS TESTABLE
------------------------------------------------------
-No gradient update happens until global_step >= WARMUP_STEPS
-(5000 = 200 episodes at MAX_CYCLES = 25). Until then the policy
-is frozen, so the two scripts must agree bit-for-bit on every
-logged array. That single comparison covers the environment,
-the seeding, action sampling, the reward bookkeeping, the
-behaviour metrics and the logging path.
-
-After warmup the runs MUST diverge, and this is by design, not
-a defect. train_exp3.py holds an episode's transitions and
-writes them to the replay buffer in one block at the end,
-because the terminal bonus beta * D is not known until the
-episode is over. So during an episode the Experiment 3 buffer
-is smaller than the Experiment 2 buffer by up to MAX_CYCLES
-transitions, and ReplayBuffer.sample draws its indices from
-rng.integers(0, self.size, ...). A different self.size means
-different indices, hence different mini-batches, hence
-divergence from the very first update. Measured directly:
-
-    update #0, global_step 5000:  Exp 2 size 5000, Exp 3 size 4975
-    update #1, global_step 5002:  Exp 2 size 5002, Exp 3 size 5000
-
-The deficit is at most 25 transitions. It is 0.5% of the buffer
-at the first update and under 0.05% by episode 2000, and it
-does not change which transitions are eventually stored, only
-when they become visible. Test 2 below confirms the divergence
-starts exactly at the first learning episode and nowhere
-earlier, which is what rules out a stray RNG draw or a
-tokenisation side effect as the cause.
-
-THE BONUS PATH
---------------
-Test 3 exploits the same warmup window from the other side. The
-bonus only touches the replay buffer, so during warmup a beta>0
-run and a beta=0 run must produce identical actions, identical
-returns and identical D -- and the shaped return must differ
-from the unshaped one by exactly beta * D_norm.
-
-TEST 4 -- THE AUGMENTED CRITIC AT BETA = 0
-------------------------------------------
-Tests 1-3 all certify the context_dim = 0 path. The capacity
-control (--beta 0 --augment-critic) runs a configuration none
-of them touch: the bonus is zero while the critic still
-receives the nine running counts. Test 4 checks that turning
-the augmentation on changes nothing about the trajectory when
-there is no bonus to learn, that shaped == unshaped exactly,
-that the critic is the width it claims and refuses a context
-mismatch in both directions, and that the augmented path is
-deterministic.
-
-Usage:  python3 test_reductions.py
-"""
-
 import os
 import shutil
 import subprocess
@@ -79,8 +7,8 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SEED = 42
-WARMUP_EPISODES = 150      # < 200, so no gradient update occurs
-CROSS_EPISODES = 260       # > 200, so learning starts at episode 200
+WARMUP_EPISODES = 150
+CROSS_EPISODES = 260
 COMMON = ["--seed", str(SEED), "--batch-size", "256",
           "--update-every", "2", "--print-every", "100000"]
 
@@ -88,17 +16,6 @@ WORK = os.path.join(HERE, ".reduction_test")
 
 
 def build_sandbox():
-    """
-    A throwaway mirror of the project, made of symlinks.
-
-    Necessary because the three scripts disagree about where
-    results go: train_baseline.py writes to a cwd-relative
-    "results/", while exp2/ and exp3/ anchor theirs to
-    PROJECT_ROOT (the folder above the script). Running the
-    test inside a symlinked mirror makes both conventions land
-    in the same throwaway tree and guarantees the real
-    results/ and checkpoints/ are never touched.
-    """
     if os.path.isdir(WORK):
         shutil.rmtree(WORK)
     os.makedirs(os.path.join(WORK, "exp2"))
@@ -115,7 +32,6 @@ def build_sandbox():
 
 
 def train(script, extra, episodes):
-    # the SANDBOX copy, so PROJECT_ROOT resolves inside it
     cmd = [sys.executable, os.path.join(WORK, script)] + extra + \
           COMMON + ["--episodes", str(episodes)]
     r = subprocess.run(cmd, cwd=WORK, capture_output=True, text=True)
@@ -138,7 +54,6 @@ def load(experiment):
 
 
 def compare(a, b, label):
-    """Every array present in both must be bit-identical."""
     A, B = load(a), load(b)
     shared = sorted(set(A) & set(B))
     bad = []
@@ -186,7 +101,7 @@ def main():
     x = load("baseline")["episode_rewards"]
     y = load("beta_0")["episode_rewards"]
     agree = int(np.argmin(x == y)) if not (x == y).all() else len(x)
-    expected = 200          # WARMUP_STEPS / MAX_CYCLES
+    expected = 200
     good = agree == expected
     print(f"  [{'PASS' if good else 'FAIL'}] identical for the first "
           f"{agree} episodes; first difference at episode {agree + 1} "
@@ -241,35 +156,11 @@ def main():
         print(f"  [{'PASS' if passed else 'FAIL'}] {label}")
         ok &= bool(passed)
 
-
     print()
     print("=" * 68)
     print("TEST 4  the augmented critic at beta = 0 "
           "(the capacity control)")
     print("=" * 68)
-    #
-    # THE ONE CONFIGURATION TESTS 1-3 DO NOT REACH.
-    #
-    # Those tests certify the OFF path: context_dim = 0, bit-
-    # identical to Experiments 1 and 2. With --augment-critic the
-    # critic input widens from 69 to 78, so it cannot be bit-
-    # identical to anything, and nothing has ever exercised
-    # --beta 0 --augment-critic. That is precisely the arm that
-    # separates "a wider critic changes learning" from "a wider
-    # critic makes THE BONUS learnable", so it is worth a guard
-    # of its own before four seeds are spent on it.
-    #
-    # 4a is the strong claim, and it is testable for the same
-    # reason Test 1 is. Inside the warmup window no gradient
-    # update happens, so the critic is never forward-passed and
-    # its width is irrelevant to the trajectory. MADDPGSystem
-    # builds the ACTOR before the critic, so the wider critic's
-    # extra initialisation draws cannot shift the actor weights,
-    # and actions are drawn from a separate numpy RNG. The two
-    # runs must therefore agree bit-for-bit on every logged
-    # array. If they do not, the augmentation is reaching
-    # something it has no business touching and the control is
-    # not a control.
 
     shutil.rmtree(os.path.join(WORK, "results"))
     train(os.path.join("exp3", "train_exp3.py"),
@@ -282,12 +173,6 @@ def main():
                   "--beta 0 --augment-critic vs --beta 0")
 
     za = load("beta_0_augcritic")
-
-    # Note on the terminal-context assertion in train_exp3.py:
-    # it is an `assert` inside the episode loop, so a failure
-    # aborts the run and train() raises SystemExit. Reaching
-    # this line at all means it fired and passed on every one
-    # of the WARMUP_EPISODES episodes.
 
     checks4 = [
         ("shaped == unshaped exactly at beta = 0 (no bonus at all)",
@@ -302,8 +187,6 @@ def main():
              if np.issubdtype(np.asarray(v).dtype, np.floating))),
     ]
 
-    # 4b: the critic itself, checked directly rather than
-    # inferred from a run. Costs no training.
     import torch
     from models.critic import CentralizedCritic
 
@@ -336,10 +219,6 @@ def main():
         print(f"  [{'PASS' if passed else 'FAIL'}] {label}")
         ok &= bool(passed)
 
-    # 4c: determinism on the augmented path. The wider critic
-    # allocates more state and the buffer carries two extra
-    # context columns; this confirms none of it is uninitialised
-    # or iteration-order dependent.
     shutil.rmtree(os.path.join(WORK, "results"))
     train(os.path.join("exp3", "train_exp3.py"),
           ["--beta", "0", "--alpha", "0", "--augment-critic"],
@@ -364,12 +243,6 @@ def _D(f):
 
 
 def _terminal_only(z0, z5, gamma=0.95, T=25):
-    """
-    With the whole bonus on the last transition, the discounted
-    return from t=0 gains exactly gamma^(T-1) * bonus. Any other
-    schedule gives a different constant, so this pins down WHERE
-    the bonus was applied, not merely that it was applied.
-    """
     d = z5["episode_diversity_norm"]
     keep = d > 0
     if not keep.any():

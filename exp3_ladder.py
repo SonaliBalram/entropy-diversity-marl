@@ -1,46 +1,3 @@
-"""
-exp3_ladder.py
-
-DENSE-LADDER EVALUATION AND BRANCH-MATCHED READOUT.
-
-Why this file exists
---------------------
-exp3_outcome.py defines the pre-registered outcome measure and
-runs it end to end. Two things make a second, thinner driver
-worth having:
-
-  1. RESUMABILITY. Evaluating 25 rungs x 4 seeds x 2 arms is
-     ~200 checkpoint evaluations. This script caches each one
-     to its own .npz and skips what is already there, so the
-     sweep can be filled in over many short sessions and
-     restarted after an interruption without losing work. The
-     cache is reused when the Experiment 3 arms land -- their
-     rungs simply get added to it.
-
-  2. THE BRANCH RESTRICTION. The hysteresis result says D is a
-     function of (return, BRANCH), not of return alone: within
-     the alpha=0 arm, at matched return, the descending branch
-     carries more diversity than the ascending branch. Matching
-     on return alone therefore leaves that difference
-     uncontrolled. This script reports the matched-return
-     Delta D twice -- restricted to the ascending branch, and
-     unrestricted -- so the size of the confound is measured
-     rather than assumed.
-
-exp3_outcome.py is NOT modified. evaluate_checkpoint is
-imported from it, so there is exactly one copy of the
-evaluation logic and the two scripts cannot drift.
-
-Usage
------
-  # fill the cache, stopping after roughly 150 seconds
-  python exp3_ladder.py --fill --budget 150
-
-  # read whatever is cached and report
-  python exp3_ladder.py --report \
-      --control baseline --treatment alpha_0.01
-"""
-
 import argparse
 import os
 import re
@@ -53,15 +10,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
-from exp3_outcome import evaluate_checkpoint       # noqa: E402
+from exp3_outcome import evaluate_checkpoint
 
 
-LAYOUT_BASE = 900_000_000     # identical to evaluate_baseline.py,
-                              # token_eval.py and exp3_outcome.py
+LAYOUT_BASE = 900_000_000
 
 
 def rungs(root, seed):
-    """(episode, path) for every ckpt_ep*.pt, plus best.pt last."""
     d = os.path.join(root, f"seed_{seed}")
     out = []
     for name in sorted(os.listdir(d)):
@@ -71,13 +26,9 @@ def rungs(root, seed):
     out.sort()
     best = os.path.join(d, "best.pt")
     if os.path.exists(best):
-        out.append((-1, best))          # -1 marks the reporting ckpt
+        out.append((-1, best))
     return out
 
-
-# =========================================================
-# PHASE 1 -- FILL THE CACHE
-# =========================================================
 
 def fill(args):
     layout_seeds = [LAYOUT_BASE + i for i in range(args.layouts)]
@@ -126,10 +77,6 @@ def fill(args):
           f"{len(todo) - done} still outstanding")
 
 
-# =========================================================
-# PHASE 2 -- REPORT
-# =========================================================
-
 def load_arm(cache_dir, arm, seeds):
     out = {}
     for seed in seeds:
@@ -161,17 +108,6 @@ def paired(values):
 
 
 def hysteresis_floor(arm, seeds, tol):
-    """
-    THE CONFOUND, MEASURED WITHIN ONE ARM.
-
-    An arm whose return peaks and then degrades traverses the
-    same return range twice. Pair each descending-branch rung
-    with the ascending-branch rung closest to it in return and
-    take the difference in D. The policy differs between the
-    two, but the RETURN does not -- so whatever is left is
-    path dependence, which is exactly the quantity that
-    matching on return alone fails to control.
-    """
     per_seed, counts = [], []
     for seed in seeds:
         lad = arm[seed]["ladder"]
@@ -205,7 +141,6 @@ def report(args):
         print(f"  {lab:14s} rungs per seed {n}   best.pt present: {rep}/"
               f"{len(args.seeds)}")
 
-    # -----------------------------------------------------
     print()
     print("=" * 72)
     print("HYSTERESIS FLOOR -- measured inside the control arm alone")
@@ -224,7 +159,6 @@ def report(args):
     else:
         print("  not enough rungs cached yet")
 
-    # -----------------------------------------------------
     for mode in ["ascending", "any"]:
         print()
         print("=" * 72)
@@ -237,9 +171,6 @@ def report(args):
                 continue
             pts = list(trt[seed]["ladder"])
             if mode == "ascending" and pts:
-                # candidates at or before the treatment arm's own
-                # return peak; best.pt sits at the ascending
-                # terminus by construction and is always admissible
                 peak_ep = max(pts, key=lambda p: p["ret"])["episode"]
                 pts = [p for p in pts if p["episode"] <= peak_ep]
             if trt[seed]["reporting"] is not None:
@@ -265,8 +196,6 @@ def report(args):
             if unmatched:
                 print(f"  WARNING seeds outside tolerance: {unmatched}")
 
-
-# =========================================================
 
 def main():
     ap = argparse.ArgumentParser()

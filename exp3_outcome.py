@@ -1,98 +1,3 @@
-"""
-exp3_outcome.py
-
-THE OUTCOME MEASURE FOR EXPERIMENT 3, DEFINED BEFORE THE RUNS.
-
-The problem this exists to solve
---------------------------------
-D = I(X ; Z) is not independent of task performance on
-Cooperative Navigation, because the task reward IS landmark
-coverage. A policy whose agents split across three distinct
-landmarks scores well AND has high D; one whose agents pile up
-scores badly and has low D. Measured on the finished
-Experiment 2 policies, per-layout D regresses on per-layout
-return, WITHIN A FIXED POLICY, with a slope of 0.015 to 0.025
-bits per reward unit (r = 0.44 to 0.65).
-
-So a raw comparison of D between an Experiment 3 arm and its
-control cannot separate
-
-    "the bonus induced role differentiation"        (the claim)
-    "the bonus changed the return, and D followed"  (an artefact)
-
-and the artefact is large: the entire +0.163 bit rise of D
-between the alpha = 0 and alpha = 0.01 policies is accounted
-for by their return difference, leaving a residual of
-+0.013 +/- 0.015 bits once return is matched.
-
-Reporting raw D would therefore have produced a false positive
-for Experiment 2. The measure has to be fixed before the
-Experiment 3 runs, not after seeing them.
-
-THE PRIMARY STATISTIC: MATCHED-RETURN Delta D
----------------------------------------------
-Both arms are evaluated across their CHECKPOINT LADDER on the
-same fixed held-out layouts, giving each arm a trajectory
-through (return, D) space. Then, per seed:
-
-  1. take the control arm's reporting checkpoint, best.pt,
-     at held-out return r0 with diversity D0;
-  2. find the treatment arm's checkpoint whose held-out return
-     is CLOSEST to r0;
-  3. require the match to be within --match-tol reward units;
-  4. Delta D_matched = D_treatment(matched) - D0.
-
-Paired across seeds, so the comparison inherits the same
-pairing that carries the power at n = 4.
-
-This needs no regression, no slope, no functional form, and no
-extrapolation. It asks one question: at the same level of task
-performance, do the two arms differ in role differentiation?
-
-THE SECONDARY STATISTIC: TREND-LINE RESIDUAL
---------------------------------------------
-As a cross-check that fails differently, D is also predicted
-from return using the within-policy slope, and the residual
-reported. Because that slope is itself policy-dependent, it is
-computed three ways -- control arm's slope, pooled slope,
-treatment arm's slope -- and the RANGE is reported. A residual
-that changes sign across those three is not evidence of
-anything, and saying so is the point of reporting all three.
-
-Two measures that fail in different directions agreeing on the
-same answer is the same argument already used for D against
-H(phi): it closes the objection from both sides.
-
-THE GAMING MONITOR
-------------------
-The pre-registered failure mode for Experiment 3 is that the
-bonus is earned through action noise rather than behaviour. At
-alpha = 0 the policy sigma sits at the LOG_STD_MIN floor of
-0.0067, orders of magnitude below the distance scale that moves
-an agent across a Voronoi boundary between landmarks, so
-quantisation into tokens discards the sampling noise outright.
-If sigma RISES along the treatment arm's ladder, that argument
-has stopped holding. Sigma is therefore recorded at every
-checkpoint and flagged automatically against --sigma-tripwire.
-The tripwire is a tripwire, not a physical threshold: the
-physical requirement is that sigma stays far below the
-inter-landmark separation, which is of order 1.
-
-Usage
------
-    # Experiment 3, once the runs exist
-    python3 exp3_outcome.py \
-        --control  "A0:checkpoints/baseline" \
-        --treatment "A2:checkpoints/beta_3" \
-        --seeds 42 128 456 789
-
-    # dry run on data where the answer is already known
-    python3 exp3_outcome.py \
-        --control  "alpha0:checkpoints/baseline" \
-        --treatment "alpha0.01:checkpoints/alpha_0.01" \
-        --seeds 42 128 456 789
-"""
-
 import os
 import re
 import argparse
@@ -107,19 +12,8 @@ from token_diversity import (
 )
 
 
-# =========================================================
-# ROLLOUT
-# =========================================================
-#
-# Deterministic only. The deterministic pass is the
-# sigma-invariant one: every agent acts at its mean mu, so no
-# sampling-noise term enters any behaviour statistic and arms
-# with different sigma stay comparable. Sigma itself is still
-# recorded, because it is the gaming monitor.
-
 def evaluate_checkpoint(path, layout_seeds, n_agents, max_cycles,
                         n_perm, torch_seed):
-
     checkpoint = torch.load(path, map_location="cpu", weights_only=False)
 
     env = MPEEnvironment(n_agents=n_agents, max_cycles=max_cycles)
@@ -131,10 +25,6 @@ def evaluate_checkpoint(path, layout_seeds, n_agents, max_cycles,
         gamma=checkpoint["gamma"],
         tau=checkpoint["tau"],
         twin_critics=checkpoint.get("twin_critics", True),
-        # Rebuilt from the file so an augmented-critic
-        # checkpoint (arm A2c, context_dim = 9) loads with the
-        # right critic shape. Absent in every pre-Sept-2026
-        # checkpoint, where 0 is the correct answer.
         context_dim=checkpoint.get("context_dim", 0),
         device="cpu",
     )
@@ -150,15 +40,11 @@ def evaluate_checkpoint(path, layout_seeds, n_agents, max_cycles,
     returns, d_bits, nulls, sigmas = [], [], [], []
 
     for layout_seed in layout_seeds:
-
         observations = env.reset(seed=layout_seed)
         tokens, total, sigma_acc = [], 0.0, []
 
         step = 0
         while True:
-            # Sigma is state-conditioned but changes little within an
-            # episode, and this extra forward pass is the dominant cost
-            # of the sweep, so it is sampled every 5th step.
             if step % 5 == 0:
                 _, std = maddpg.policy_params(observations)
                 sigma_acc.append(float(np.mean(np.asarray(std))))
@@ -199,7 +85,6 @@ def evaluate_checkpoint(path, layout_seeds, n_agents, max_cycles,
 
 
 def ladder(root, seed):
-    """Every ckpt_ep*.pt in a seed folder, in episode order."""
     d = os.path.join(root, f"seed_{seed}")
     items = []
     for name in os.listdir(d):
@@ -210,13 +95,6 @@ def ladder(root, seed):
 
 
 def within_policy_slope(res):
-    """
-    Regression of per-layout D on per-layout return, INSIDE a
-    single policy. The policy cannot vary along this line, so
-    whatever slope it has cannot have been caused by the
-    treatment -- which is exactly what makes it usable as the
-    confound's own coefficient.
-    """
     b = np.polyfit(res["per_layout_return"], res["per_layout_D"], 1)[0]
     r = np.corrcoef(res["per_layout_return"], res["per_layout_D"])[0, 1]
     return float(b), float(r)
@@ -244,9 +122,6 @@ def main():
 
     os.makedirs(args.out_dir, exist_ok=True)
 
-    # Identical to evaluate_baseline.py and token_eval.py, and
-    # disjoint from every training block (training uses
-    # SEED * 1_000_000 + episode).
     layout_seeds = [900_000_000 + i for i in range(args.layouts)]
 
     arms = {}
@@ -283,9 +158,6 @@ def main():
             arm["seeds"][seed] = dict(ladder=points, reporting=rep)
         print()
 
-    # =====================================================
-    # PRIMARY: matched-return Delta D
-    # =====================================================
     print("=" * 72)
     print("PRIMARY OUTCOME -- matched-return Delta D")
     print("=" * 72)
@@ -325,9 +197,6 @@ def main():
               f"A denser ladder (every 2000 episodes) tightens these matches. "
               f"Report the gap; do not widen the tolerance silently.")
 
-    # =====================================================
-    # SECONDARY: trend-line residual, three slopes
-    # =====================================================
     print()
     print("=" * 72)
     print("SECONDARY -- residual after predicting D from return")
@@ -362,9 +231,6 @@ def main():
               "is not evidence either way. The matched-return statistic above "
               "is the one to report.")
 
-    # =====================================================
-    # GAMING MONITOR
-    # =====================================================
     print()
     print("=" * 72)
     print("GAMING MONITOR -- sigma along the treatment ladder")
@@ -395,9 +261,6 @@ def main():
         print(f"\n  No checkpoint exceeded sigma = {args.sigma_tripwire}. "
               f"The quantisation argument holds.")
 
-    # =====================================================
-    # SAVE
-    # =====================================================
     out = {}
     for role in ("control", "treatment"):
         lab = arms[role]["label"]

@@ -1,33 +1,3 @@
-"""
-block4_checks.py  --  pre-training checks for the windowed diversity measure.
-
-Run from the repo root (baseline_fixed/), in your macOS .venv:
-
-    python exp3_windowed/block4_checks.py
-
-No training. It rolls out the EXISTING baseline checkpoints on the same 200
-held-out layouts as exp3_outcome.py / token_eval.py, saves the raw per-step
-tokens, and reports three numbers that must be fixed BEFORE the new A2 runs:
-
-  1. ZERO LEVEL       windowed D when agent identity carries no information
-                      (tokens shuffled across agents within each window)
-  2. DETECTION FLOOR  the up/down (hysteresis) gap at matched return on the
-                      baseline ladder, measured with windowed D
-  3. NOISE CHECK      episode-to-episode spread of D_win_norm at best.pt,
-                      and whether beta = 3 keeps the old safety margin
-
-Every number is also computed for the OLD whole-episode D, so the old
-published values (0.0385-0.039 null, 0.0566 floor) act as a built-in check
-that this script's procedure matches the one used before.
-
-The rollout mirrors exp3_outcome.evaluate_checkpoint exactly (same
-environment, checkpoint loading, deterministic actions, tokenise, layout
-seeds). It skips the sigma pass, which Block 4 does not need.
-
-Tokens are cached per checkpoint in results/exp3_windowed/block4_cache/,
-so the run is resumable and later analyses need no new rollouts.
-"""
-
 import os
 import re
 import sys
@@ -36,31 +6,22 @@ import argparse
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(HERE)                 # baseline_fixed/
+PROJECT_ROOT = os.path.dirname(HERE)
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, HERE)
 
-from windowed_diversity import windowed_diversity    # noqa: E402
+from windowed_diversity import windowed_diversity
 
 LOG2_3 = np.log2(3)
 N_WINDOWS = 5
 
-# Pre-registered decision rules (written before seeing any output)
-MATCH_TOL = 1.0          # reward units, same as exp3_outcome.py
-STEP_REWARD = 1.12       # typical per-step base reward magnitude
+MATCH_TOL = 1.0
+STEP_REWARD = 1.12
 BETA = 3.0
-GATE = dict(seed=42, episode=2000, ret=-35.580, D=0.9306)   # known values
+GATE = dict(seed=42, episode=2000, ret=-35.580, D=0.9306)
 
-
-# =========================================================
-# ROLLOUT  (heavy imports live here so the analysis can be tested alone)
-# =========================================================
 
 def rollout_tokens(path, layout_seeds, n_agents=3, max_cycles=25):
-    """
-    Returns tokens (L, T, n_agents) int8, returns (L,), old_bits (L,).
-    Same procedure as exp3_outcome.evaluate_checkpoint, minus the sigma pass.
-    """
     import torch
     from environment import MPEEnvironment
     from maddpg_system import MADDPGSystem
@@ -86,11 +47,11 @@ def rollout_tokens(path, layout_seeds, n_agents=3, max_cycles=25):
         while True:
             actions = maddpg.act(obs, deterministic=True)
             obs, reward, terminated, truncated, _ = env.step(actions)
-            toks.append(tokenise(obs))            # next_observations convention
+            toks.append(tokenise(obs))
             total += reward
             if terminated or truncated:
                 break
-        toks = np.asarray(toks)                   # [T, n_agents]
+        toks = np.asarray(toks)
         if toks.shape != (max_cycles, n_agents):
             raise RuntimeError(f"unexpected token shape {toks.shape} in {path}")
         all_tokens.append(toks.astype(np.int8))
@@ -120,15 +81,10 @@ def ladder(root, seed):
     return sorted(items)
 
 
-# =========================================================
-# MEASURES ON CACHED TOKENS
-# =========================================================
-
 def per_layout_measures(tokens):
-    """tokens (L, T, N) -> windowed bits, windowed norm, one-window bits (L,)."""
     win, win_n, one = [], [], []
     for tok in tokens:
-        a = tok.T                                            # (N, T)
+        a = tok.T
         d, dn, _ = windowed_diversity(a, n_windows=N_WINDOWS)
         win.append(d)
         win_n.append(dn)
@@ -137,7 +93,6 @@ def per_layout_measures(tokens):
 
 
 def shuffled_windowed(tok_nt, rng, n_windows=N_WINDOWS):
-    """Shuffle tokens across agents WITHIN each window, keep the window's pool."""
     n, T = tok_nt.shape
     L = T // n_windows
     out = tok_nt.copy()
@@ -148,26 +103,17 @@ def shuffled_windowed(tok_nt, rng, n_windows=N_WINDOWS):
 
 
 def zero_level(tokens, rng, n_perm):
-    """Mean windowed D and mean old D over label-shuffled copies of every layout."""
     win, old = [], []
     for tok in tokens:
         a = tok.T
         for _ in range(n_perm):
             win.append(windowed_diversity(shuffled_windowed(a, rng), N_WINDOWS)[0])
-            # old-D null: shuffle across agents over the WHOLE episode
             flat = rng.permutation(a.ravel()).reshape(a.shape)
             old.append(windowed_diversity(flat, n_windows=1)[0])
     return float(np.mean(win)), float(np.mean(old))
 
 
 def hysteresis(points, key, tol=MATCH_TOL):
-    """
-    points: ladder entries (dicts with 'episode', 'ret', key), episode order.
-    Peak = the rung with the highest held-out return. For every rung AFTER the
-    peak (descending branch), find the ascending-branch rung (at or before the
-    peak) with the closest return; keep the pair if within tol.
-    Returns (mean descending-minus-ascending gap, number of pairs).
-    """
     rets = np.array([p["ret"] for p in points])
     k = int(np.argmax(rets))
     asc, desc = points[:k + 1], points[k + 1:]
@@ -187,10 +133,6 @@ def paired(values):
     sd = v.std(ddof=1)
     return float(v.mean()), float(sd), float(v.mean() / (sd / np.sqrt(len(v))))
 
-
-# =========================================================
-# MAIN
-# =========================================================
 
 def main():
     ap = argparse.ArgumentParser()

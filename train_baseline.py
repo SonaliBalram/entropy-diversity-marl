@@ -1,50 +1,3 @@
-"""
-train_baseline.py
-
-Experiment 1: stochastic MADDPG baseline, alpha = 0.
-
-CORRECTIONS RELATIVE TO THE PREVIOUS VERSION
---------------------------------------------
-1. env.step() now returns 5 values and only `terminated`
-   goes into the replay buffer. Previously `terminated or
-   truncated` was stored, which cut the Bellman bootstrap at
-   every time limit and stalled the critic at roughly a
-   fifth of the true value scale.
-
-2. episode_seed = SEED * 1_000_000 + episode.
-   The previous `SEED + episode` made the five runs share
-   almost all their environment layouts: seeds 42 and 128
-   overlapped on 49,914 of 50,000 episodes (99.8%), and
-   across all five seeds only 50,958 distinct layouts were
-   drawn out of 250,000 episodes. The runs therefore differed
-   only in network initialisation and sampling noise, which
-   is why the across-seed std (1.678) looked implausibly
-   small. It was not measuring seed variability.
-
-3. Warmup now takes UNIFORM RANDOM actions rather than
-   untrained-policy actions, so the initial buffer covers the
-   action space instead of the narrow band the freshly
-   initialised network happens to produce.
-
-4. UPDATE_EVERY added. One gradient update per environment
-   step at batch 1024 is 1.25M updates per seed, measured at
-   39.8 ms each on CPU: ~13.8 h per seed, ~69 h for five
-   seeds. The startup banner now prints this estimate before
-   committing.
-
-5. Periodic checkpointing, so a crash at episode 40,000 does
-   not lose the run.
-
-6. All three behaviour metric families are now actually
-   recorded. Previously only InstantaneousBehaviourMetrics
-   was imported; TemporalBehaviourMetrics and
-   PolicyDivergenceMetrics existed but were never called.
-
-7. mean_q is logged against the empirical discounted return,
-   which is the single diagnostic that catches a broken
-   critic.
-"""
-
 import os
 import time
 import random
@@ -61,10 +14,6 @@ from instantaneous_metrics import InstantaneousBehaviourMetrics
 from temporal_behaviour import TemporalBehaviourMetrics
 from policy_divergence_behaviour import PolicyDivergenceMetrics
 
-
-# =========================================================
-# ARGUMENTS
-# =========================================================
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--seed", type=int, default=42)
@@ -97,10 +46,6 @@ def set_seed(seed):
 set_seed(SEED)
 
 
-# =========================================================
-# CONFIGURATION
-# =========================================================
-
 N_AGENTS = 3
 OBSERVATION_DIM = 18
 ACTION_DIM = 5
@@ -118,28 +63,16 @@ TAU = 0.005
 LR_ACTOR = 1e-4
 LR_CRITIC = 1e-3
 
-# Raised from 1.0: measured pre-clip critic gradient norms sit
-# at 0.2-3.3, so a clip of 1.0 fired on most updates.
-# update() now logs the pre-clip norms so this can be tuned
-# from data.
 GRAD_CLIP_NORM = 10.0
 HUBER_DELTA = 10.0
 
-# Clipped double-Q. Single-critic MADDPG was measured to
-# diverge here (Q drifted to -0.03 against a true return of
-# -22.8 while reward degraded). See maddpg_system.py note (e).
-# Set TWIN_CRITICS = False to reproduce that divergence.
 TWIN_CRITICS = True
 POLICY_DELAY = 2
 
-# Baseline definition: NO entropy bonus. The actor maximises
-# E[Q(s,a)] only. Experiments 2-5 change this and nothing else.
 ALPHA = args.alpha
 
 DEVICE = "cpu"
 
-# Results are separated by alpha so Experiment 2+ cannot
-# overwrite the Experiment 1 baseline.
 EXPERIMENT = "baseline" if ALPHA == 0.0 else f"alpha_{ALPHA:g}"
 
 RESULTS_DIR = os.path.join("results", EXPERIMENT, f"seed_{SEED}")
@@ -147,10 +80,6 @@ CHECKPOINT_DIR = os.path.join("checkpoints", EXPERIMENT, f"seed_{SEED}")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
-
-# =========================================================
-# SETUP
-# =========================================================
 
 env = MPEEnvironment(n_agents=N_AGENTS, max_cycles=MAX_CYCLES)
 
@@ -186,10 +115,6 @@ divergence_metrics = PolicyDivergenceMetrics(N_AGENTS, ACTION_DIM)
 action_rng = np.random.default_rng(SEED)
 
 
-# =========================================================
-# STORAGE
-# =========================================================
-
 episode_rewards = []
 episode_discounted = []
 episode_value_avg = []
@@ -210,15 +135,10 @@ behaviour_history = []
 global_step = 0
 update_count = 0
 
-# Best-checkpoint tracking.
 best_reward = -float("inf")
 best_episode = -1
 BEST_BURN_IN = 2000
 
-
-# =========================================================
-# CHECKPOINT METADATA (written into every saved file)
-# =========================================================
 
 CHECKPOINT_METADATA = {
     "seed": SEED,
@@ -240,10 +160,6 @@ CHECKPOINT_METADATA = {
     "twin_critics": TWIN_CRITICS,
 }
 
-
-# =========================================================
-# BANNER
-# =========================================================
 
 print("-" * 64)
 print("MADDPG BASELINE TRAINING  (Experiment 1, alpha = 0)")
@@ -268,15 +184,9 @@ print(f"  {'Planned updates':24s}: {planned_updates:,}")
 print("-" * 64)
 
 
-# =========================================================
-# TRAINING LOOP
-# =========================================================
-
 start_time = time.time()
 
 for episode in range(NUM_EPISODES):
-
-    # Disjoint seed blocks per run -- see correction (2).
     episode_seed = SEED * 1_000_000 + episode
 
     observations = env.reset(seed=episode_seed)
@@ -286,15 +196,8 @@ for episode in range(NUM_EPISODES):
     step_rewards = []
 
     while True:
-
         global_step += 1
         episode_steps += 1
-
-        # -------------------------------------------------
-        # 1. ACTION
-        # -------------------------------------------------
-        # Uniform random during warmup so the initial buffer
-        # covers the action space -- see correction (3).
 
         if global_step < WARMUP_STEPS:
             actions = action_rng.random(
@@ -303,19 +206,11 @@ for episode in range(NUM_EPISODES):
         else:
             actions = maddpg.act(observations, deterministic=False)
 
-        # -------------------------------------------------
-        # 2. RECORD BEHAVIOUR
-        # -------------------------------------------------
-
         instant_metrics.record(actions)
         temporal_metrics.record(actions)
 
         means, stds = maddpg.policy_params(observations)
         divergence_metrics.record(means, stds)
-
-        # -------------------------------------------------
-        # 3. STEP
-        # -------------------------------------------------
 
         (
             next_observations,
@@ -325,7 +220,6 @@ for episode in range(NUM_EPISODES):
             info
         ) = env.step(actions)
 
-        # Only `terminated` cuts the bootstrap -- correction (1).
         replay_buffer.add(
             observations,
             actions,
@@ -338,16 +232,11 @@ for episode in range(NUM_EPISODES):
         episode_reward += reward
         step_rewards.append(reward)
 
-        # -------------------------------------------------
-        # 4. UPDATE
-        # -------------------------------------------------
-
         if (
             len(replay_buffer) >= BATCH_SIZE
             and global_step >= WARMUP_STEPS
             and global_step % UPDATE_EVERY == 0
         ):
-
             info_update = maddpg.update(
                 replay_buffer.sample(BATCH_SIZE)
             )
@@ -365,28 +254,7 @@ for episode in range(NUM_EPISODES):
         if terminated or truncated:
             break
 
-    # =====================================================
-    # END OF EPISODE
-    # =====================================================
-
     episode_rewards.append(episode_reward)
-
-    # -----------------------------------------------------
-    # DISCOUNTED RETURN-TO-GO FROM EVERY TIMESTEP
-    # -----------------------------------------------------
-    #
-    # G_t = sum_{k>=t} gamma^(k-t) r_k, computed backwards.
-    #
-    # mean_q is Q averaged over states drawn UNIFORMLY from
-    # the replay buffer, i.e. states at ALL timesteps. So the
-    # quantity it estimates is the MEAN of G_t over t, not
-    # G_0. Logging G_0 (as the previous version did) made Q
-    # look wrong by a factor of ~0.62 on this task and forced
-    # a mental correction when reading the log.
-    #
-    # `value_avg` is directly comparable to mean_q.
-    # `discounted` (= G_0) is kept because it is the natural
-    # "episode return" for reporting.
 
     running = 0.0
     returns_to_go = np.empty(len(step_rewards), dtype=np.float64)
@@ -412,21 +280,7 @@ for episode in range(NUM_EPISODES):
     temporal_metrics.reset()
     divergence_metrics.reset()
 
-    # =====================================================
-    # PROGRESS
-    # =====================================================
-
     if (episode + 1) % args.print_every == 0 or episode == 0:
-
-        # Per-episode line. Columns follow the original
-        # baseline's layout so runs stay comparable by eye,
-        # with the diagnostics added on the right.
-        #
-        # NOTE: Actor is EXACTLY -Q by construction
-        # (actor_loss = -q_val.mean()), so it carries no
-        # information beyond the Q column. Kept only for
-        # continuity with the earlier logs.
-
         line = (
             f"Episode {episode + 1:6d}"
             f" | Reward: {episode_reward:9.3f}"
@@ -435,13 +289,6 @@ for episode in range(NUM_EPISODES):
         )
 
         if mean_q_values:
-
-            # G is the discounted return-to-go averaged over
-            # every timestep, over the last REWARD_WINDOW
-            # episodes. This is exactly what mean_q estimates,
-            # so a healthy critic has Q ~= G. Q drifting ABOVE
-            # G is overestimation bias; far BELOW it is the
-            # underestimation that clipped double-Q can cause.
             emp = float(np.mean(episode_value_avg[-REWARD_WINDOW:]))
 
             line += (
@@ -461,34 +308,12 @@ for episode in range(NUM_EPISODES):
             f" | Avg{REWARD_WINDOW}: {running_mean_rewards[-1]:8.2f}"
         )
 
-        # ETA only occasionally, so it does not clutter a
-        # per-episode log.
         if (episode + 1) % 500 == 0:
             elapsed = time.time() - start_time
             rate = (episode + 1) / elapsed
             line += f" | ETA {(NUM_EPISODES - episode - 1) / rate / 3600:5.2f}h"
 
         print(line, flush=True)
-
-    # =====================================================
-    # PERIODIC CHECKPOINT
-    # =====================================================
-
-    # =====================================================
-    # CHECKPOINTS
-    # =====================================================
-    #
-    # Two kinds, and NEITHER overwrites a previous one:
-    #
-    #   ckpt_ep<N>.pt : a fixed grid, so any point on the
-    #                   learning curve can be revisited.
-    #   best.pt       : whichever policy had the highest
-    #                   rolling-100 reward so far.
-    #
-    # The previous version wrote a single latest.pt and
-    # overwrote it every time, so when seed 42 peaked at
-    # episode ~13,000 and then degraded 7.8 points, the good
-    # policy was gone by the end of the run.
 
     if (episode + 1) % args.checkpoint_every == 0:
         maddpg.save(
@@ -498,8 +323,6 @@ for episode in range(NUM_EPISODES):
             metadata=CHECKPOINT_METADATA,
         )
 
-    # Track the best policy. Burn-in guards against an early
-    # lucky window winning on a barely-trained network.
     if (
         episode + 1 >= BEST_BURN_IN
         and running_mean_rewards[-1] > best_reward
@@ -513,10 +336,6 @@ for episode in range(NUM_EPISODES):
                       "best_avg_reward": best_reward},
         )
 
-
-# =========================================================
-# SAVE
-# =========================================================
 
 print("-" * 64)
 print(f"Total environment steps : {global_step:,}")
@@ -543,9 +362,6 @@ for name, values in arrays.items():
         np.array(values)
     )
 
-# Behaviour history saved as a named-column archive so new
-# metrics can be added without breaking the column ordering
-# that a bare 2-D array would depend on.
 behaviour_keys = sorted(behaviour_history[0].keys())
 
 np.savez(
@@ -558,10 +374,6 @@ np.savez(
 
 MODEL_PATH = os.path.join(CHECKPOINT_DIR, "final.pt")
 
-# One save, not two. The previous version called
-# maddpg.save() and then immediately overwrote the file with
-# a second torch.save(), so the optimiser state was silently
-# lost. Metadata now rides along with the network state.
 maddpg.save(MODEL_PATH, metadata=CHECKPOINT_METADATA)
 
 print(f"Best policy: episode {best_episode} "

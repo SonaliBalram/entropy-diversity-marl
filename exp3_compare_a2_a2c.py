@@ -1,30 +1,3 @@
-"""
-exp3_compare_a2_a2c.py
-
-A THOROUGH A2 vs A2c COMPARISON.
-
-A2  = beta 3, alpha 0, terminal bonus, standard critic
-A2c = the same, plus the 3x3 running token-count matrix in the
-      CENTRALISED CRITIC's input (69 -> 78 dims)
-
-The two arms differ ONLY in the critic's input space. The actor,
-the objective, the reward, the schedule, the seeds and the episode
-seeds are identical, and at a given seed both arms start from the
-SAME actor weights (the actor is constructed before the critics,
-so widening the critic does not shift the actor's RNG draws).
-
-Comparisons are grouped by what they can establish:
-  A. training dynamics       -- did it learn differently
-  B. critic health           -- the mechanism's own diagnostics
-  C. diversity, training     -- D as seen during learning
-  D. diversity, held out     -- the pre-registered outcome
-  E. behavioural metrics     -- an independent measure family
-  F. stability               -- is A2c noisier across seeds
-
-A2c is NEVER compared to Experiment 1 or Experiment 2: it changes
-the critic's observation space, so only the A2c-vs-A2 contrast is
-licensed by the protocol.
-"""
 import numpy as np, os
 
 S = [42, 128, 456, 789]
@@ -47,7 +20,6 @@ def tail(x, frac=0.25):
 
 
 def paired(a, b):
-    """b - a, paired across seeds."""
     d = np.asarray(b, float) - np.asarray(a, float)
     sd = d.std(ddof=1)
     se = sd / np.sqrt(len(d))
@@ -77,7 +49,6 @@ def smooth(x, k=500):
     return (c[k:] - c[:-k]) / k
 
 
-# =========================================================
 print("=" * W)
 print("A2 vs A2c -- THOROUGH COMPARISON")
 print("=" * W)
@@ -87,7 +58,6 @@ print("  Sole difference: A2c's centralised critic additionally sees")
 print("  the 3x3 running token-count matrix n_i(x)/T (69 -> 78 inputs).")
 print("  Same seed => same actor initialisation and same episode layouts.")
 
-# ---------- A. TRAINING DYNAMICS ----------
 header("A. TRAINING DYNAMICS  (from the 50,000-episode training curves)")
 pk, pke, fin, deg = {}, {}, {}, {}
 for lab, arm in ARMS:
@@ -97,13 +67,12 @@ for lab, arm in ARMS:
         i = int(np.argmax(r))
         pk[lab].append(r[i]); pke[lab].append(i + 500)
         fin[lab].append(np.mean(r[-2000:]))
-        deg[lab].append(r[-1] - r[i])          # peak -> end
+        deg[lab].append(r[-1] - r[i])
 line("peak smoothed return", pk["A2"], pk["A2c"])
 line("episode of peak", pke["A2"], pke["A2c"], fmt="{:9.0f}")
 line("final return (last 2k)", fin["A2"], fin["A2c"])
 line("degradation, peak to end", deg["A2"], deg["A2c"])
 
-# ---------- B. CRITIC HEALTH ----------
 header("B. CRITIC HEALTH  (the augmentation's own diagnostics)")
 for nm, f in [("twin-critic disagreement", "critic_disagreements.npy"),
               ("critic loss", "critic_losses.npy"),
@@ -113,7 +82,6 @@ for nm, f in [("twin-critic disagreement", "critic_disagreements.npy"),
     b = [tail(arr("beta_3_augcritic", s, f)) for s in S]
     line(nm + " (last 25%)", a, b)
 
-# Q vs G pessimism: |mean_q| / |discounted return|
 a = [abs(tail(arr("beta_3", s, "mean_q_values.npy"))) /
      abs(tail(arr("beta_3", s, "episode_discounted.npy"))) for s in S]
 b = [abs(tail(arr("beta_3_augcritic", s, "mean_q_values.npy"))) /
@@ -133,7 +101,6 @@ for lab, arm in ARMS:
         q.append(np.mean(v))
     print(f"    {lab:4s} " + "  ".join(f"Q{k+1} {v:6.3f}" for k, v in enumerate(q)))
 
-# ---------- C. DIVERSITY DURING TRAINING ----------
 header("C. DIVERSITY DURING TRAINING  (D_norm on the training rollouts)")
 a = [tail(arr("beta_3", s, "episode_diversity_norm.npy"), 0.02) for s in S]
 b = [tail(arr("beta_3_augcritic", s, "episode_diversity_norm.npy"), 0.02) for s in S]
@@ -142,7 +109,6 @@ a = [np.nanmax(smooth(arr("beta_3", s, "episode_diversity_norm.npy"), 1000)) for
 b = [np.nanmax(smooth(arr("beta_3_augcritic", s, "episode_diversity_norm.npy"), 1000)) for s in S]
 line("peak smoothed D_norm", a, b)
 
-# ---------- D. DIVERSITY, HELD OUT ----------
 header("D. DIVERSITY, HELD OUT  (200 fixed layouts, deterministic policy)")
 def cget(arm, s, ep):
     return np.load(os.path.join(CACHE, f"{arm}__seed{s}__ep{ep}.npz"))
@@ -167,7 +133,6 @@ a = [max(x[1] for x in ladder("beta_3", s)) for s in S]
 b = [max(x[1] for x in ladder("beta_3_augcritic", s)) for s in S]
 line("max return on ladder", a, b)
 
-# hysteresis inside each arm
 print()
 print("  Hysteresis (descending minus ascending D at matched return), per arm:")
 for lab, arm in ARMS:
@@ -185,7 +150,6 @@ for lab, arm in ARMS:
     print(f"    {lab:4s} {per.mean():+.4f} +/- {per.std(ddof=1):.4f} bits "
           f"(n={len(per)} seeds)")
 
-# ---------- E. BEHAVIOURAL METRICS ----------
 header("E. BEHAVIOURAL METRICS  (independent measure family, sigma-invariant)")
 for nm, key in [("pairwise cosine distance", "cosine_mean"),
                 ("pairwise euclidean distance", "euclidean_mean"),
@@ -199,7 +163,6 @@ for nm, key in [("pairwise cosine distance", "cosine_mean"),
     except KeyError:
         pass
 
-# ---------- F. STABILITY ----------
 header("F. STABILITY ACROSS SEEDS  (spread, not a paired test)")
 print(f"  {'quantity':32s} {'A2 sd':>9s} {'A2c sd':>9s}")
 for nm, vals in [("peak return", (pk["A2"], pk["A2c"])),

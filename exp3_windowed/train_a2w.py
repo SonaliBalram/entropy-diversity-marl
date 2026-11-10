@@ -1,48 +1,3 @@
-"""
-train_a2w.py
-
-Experiment 3, rebuilt: arm A2 (and A2c with --augment-critic) using the
-WINDOWED diversity measure.
-
-This file is exp3/train_exp3.py with exactly these changes:
-
-  1. THE MEASURE. The terminal bonus is beta * D_win_norm, where
-
-         D_w        = H(f_bar_w) - (1/N) sum_i H(f_i,w)     per 5-step window
-         D_win      = (1/5) sum_w D_w                       = I(X; Z | W)
-         D_win_norm = D_win / log2(3)                       in [0, 1]
-
-     computed by windowed_diversity.py. With --n-windows 1 this is exactly
-     the old D, so --n-windows 1 must reproduce train_exp3.py (checked by
-     test_a2w.py). Everything else about the bonus is unchanged: paid once,
-     on the last transition, beta in reward units, alpha = 0.
-
-  2. THE A2c CONTEXT (--augment-critic). 11 numbers instead of 9:
-         current window's counts / 5            (9)
-         finished windows' D / (5 log2 3)       (1)
-         window index (k+1) / 5                 (1)
-     The counts roll into the finished sum one step AFTER a window ends, so
-     the last transition's context reproduces the bonus exactly. That is
-     asserted every episode (bonus_from_context).
-
-  3. SAFER DEFAULTS. --batch-size 256 and --update-every 2, the values every
-     real run used. train_exp3.py defaulted to 1024 / 1, so a forgotten flag
-     silently broke comparability.
-
-  4. REMOVED --bonus-schedule spread. Decision A fixed the bonus as terminal.
-
-  5. LOGGING. The raw per-step tokens (episodes x 25 x 3, int8) and the five
-     per-window D values are saved, so any measure can be recomputed offline.
-     The permutation null is the WITHIN-WINDOW shuffle.
-
-Results go to results/beta_<b>_w<n>[ _augcritic]/seed_<s>/, so the old
-beta_3/ and beta_3_augcritic/ trees are never touched.
-
-Everything else -- the actor, the algorithm, held transitions, terminated-only
-bootstrapping, episode seeds, warmup, checkpoints, best.pt on the UNSHAPED
-return -- is identical to train_exp3.py.
-"""
-
 import os
 import sys
 import time
@@ -74,10 +29,6 @@ from windowed_diversity import (
 )
 
 
-# =========================================================
-# ARGUMENTS
-# =========================================================
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--seed", type=int, default=42)
 parser.add_argument("--episodes", type=int, default=50000)
@@ -95,8 +46,17 @@ parser.add_argument("--n-windows", type=int, default=5,
 parser.add_argument("--augment-critic", action="store_true",
                     help="Arm A2c: give the centralised critic the 11-number "
                          "windowed context. The actor is untouched.")
+parser.add_argument("--terminal-at-limit", action="store_true",
+                    help="A2c only: store done=1 on the final transition, so the "
+                         "critic does not bootstrap from the state after the time "
+                         "limit. Correct when the critic can tell the time, which "
+                         "the windowed context allows (Pardo et al., 2018).")
 parser.add_argument("--null-every", type=int, default=500)
 args = parser.parse_args()
+if args.terminal_at_limit and not args.augment_critic:
+    parser.error("--terminal-at-limit requires --augment-critic: without the "
+                 "context the critic cannot tell the time, so the time limit "
+                 "is a truncation and must be bootstrapped through.")
 
 if args.beta < 0.0:
     raise SystemExit(f"--beta must be >= 0 (received {args.beta}).")
@@ -114,10 +74,6 @@ def set_seed(seed):
 
 set_seed(SEED)
 
-
-# =========================================================
-# CONFIGURATION
-# =========================================================
 
 N_AGENTS = 3
 OBSERVATION_DIM = 18
@@ -152,22 +108,19 @@ CONTEXT_DIM = (N_AGENTS * N_LANDMARKS + 2) if AUGMENT_CRITIC else 0
 
 DEVICE = "cpu"
 
-# Every setting that changes what the run IS appears in the name.
 EXPERIMENT = f"beta_{BETA:g}_w{N_WINDOWS}"
 if ALPHA != 0.0:
     EXPERIMENT += f"_alpha_{ALPHA:g}"
 if AUGMENT_CRITIC:
     EXPERIMENT += "_augcritic"
+if args.terminal_at_limit:
+    EXPERIMENT += "_term"
 
 RESULTS_DIR = os.path.join(PROJECT_ROOT, "results", EXPERIMENT, f"seed_{SEED}")
 CHECKPOINT_DIR = os.path.join(PROJECT_ROOT, "checkpoints", EXPERIMENT, f"seed_{SEED}")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
-
-# =========================================================
-# SETUP
-# =========================================================
 
 env = MPEEnvironment(n_agents=N_AGENTS, max_cycles=MAX_CYCLES)
 
@@ -204,20 +157,15 @@ divergence_metrics = PolicyDivergenceMetrics(N_AGENTS, ACTION_DIM)
 
 action_rng = np.random.default_rng(SEED)
 
-# Separate stream: the null can never shift the action or replay streams.
 null_rng = np.random.default_rng(SEED + 7_000_000)
 
 
-# =========================================================
-# STORAGE
-# =========================================================
-
-episode_rewards = []            # UNSHAPED -- reported, and used for best.pt
+episode_rewards = []
 episode_shaped_rewards = []
 episode_diversity_norm = []
 episode_diversity_bits = []
-window_diversity_bits = []      # (episodes, N_WINDOWS)
-episode_tokens_log = []         # (episodes, T, N) int8
+window_diversity_bits = []
+episode_tokens_log = []
 null_episodes = []
 null_values = []
 episode_discounted = []
@@ -258,6 +206,7 @@ CHECKPOINT_METADATA = {
     "n_windows": N_WINDOWS,
     "bonus_schedule": "terminal",
     "augment_critic": AUGMENT_CRITIC,
+    "terminal_at_limit": args.terminal_at_limit,
     "context_dim": CONTEXT_DIM,
     "n_landmarks": N_LANDMARKS,
     "lr_actor": LR_ACTOR,
@@ -271,10 +220,6 @@ CHECKPOINT_METADATA = {
     "twin_critics": TWIN_CRITICS,
 }
 
-
-# =========================================================
-# BANNER
-# =========================================================
 
 print("-" * 64)
 print(f"MADDPG + WINDOWED DIVERSITY  (A2{'c' if AUGMENT_CRITIC else ''}, beta = {BETA:g})")
@@ -290,6 +235,8 @@ for k, v in [
     ("Windows", f"{N_WINDOWS} x {MAX_CYCLES // N_WINDOWS} steps"),
     ("Critic context", f"{CONTEXT_DIM} "
                        f"({'window counts + finished D + index' if AUGMENT_CRITIC else 'none -- arm A2'})"),
+    ("Final step", "terminal (no bootstrap)" if args.terminal_at_limit
+                   else "bootstrapped through the time limit"),
     ("Results dir", RESULTS_DIR),
 ]:
     print(f"  {k:24s}: {v}")
@@ -300,14 +247,9 @@ print(f"  {'Planned updates':24s}: {(NUM_EPISODES * MAX_CYCLES) // UPDATE_EVERY:
 print("-" * 64)
 
 
-# =========================================================
-# TRAINING LOOP
-# =========================================================
-
 start_time = time.time()
 
 for episode in range(NUM_EPISODES):
-
     episode_seed = SEED * 1_000_000 + episode
     observations = env.reset(seed=episode_seed)
 
@@ -315,33 +257,27 @@ for episode in range(NUM_EPISODES):
     episode_steps = 0
     step_rewards = []
 
-    pending = []            # transitions held until the bonus is known
-    episode_tokens = []     # one (N,) token vector per step
+    pending = []
+    episode_tokens = []
 
     while True:
-
         global_step += 1
         episode_steps += 1
 
-        # 1. ACTION
         if global_step < WARMUP_STEPS:
             actions = action_rng.random((N_AGENTS, ACTION_DIM)).astype(np.float32)
         else:
             actions = maddpg.act(observations, deterministic=False)
 
-        # 2. RECORD BEHAVIOUR
         instant_metrics.record(actions)
         temporal_metrics.record(actions)
         means, stds = maddpg.policy_params(observations)
         divergence_metrics.record(means, stds)
 
-        # 3. STEP
         next_observations, reward, terminated, truncated, info = env.step(actions)
 
-        # 3b. TOKENISE (from next_observations: every token reflects an action)
         token_t = tokenise(next_observations, N_LANDMARKS)
 
-        # 3b-ii. CRITIC CONTEXT (A2c only): before and after this step's token
         if CONTEXT_DIM:
             ctx_before = (critic_context(np.asarray(episode_tokens), N_WINDOWS,
                                          N_LANDMARKS, MAX_CYCLES)
@@ -354,14 +290,12 @@ for episode in range(NUM_EPISODES):
         else:
             ctx_before = ctx_after = None
 
-        # 3c. HOLD THE TRANSITION (terminated only -- never `or truncated`)
         pending.append([observations, actions, reward, next_observations,
                         terminated, ctx_before, ctx_after])
 
         observations = next_observations
         episode_reward += reward
 
-        # 4. UPDATE
         if (len(replay_buffer) >= BATCH_SIZE
                 and global_step >= WARMUP_STEPS
                 and global_step % UPDATE_EVERY == 0):
@@ -377,26 +311,23 @@ for episode in range(NUM_EPISODES):
         if terminated or truncated:
             break
 
-    # =====================================================
-    # END OF EPISODE -- THE WINDOWED BONUS
-    # =====================================================
-
-    tokens = np.asarray(episode_tokens)                        # [T, N]
+    tokens = np.asarray(episode_tokens)
     d_bits, d_norm, d_per_window = windowed_diversity(tokens.T, N_WINDOWS, N_LANDMARKS)
 
-    # A2c's claim, checked every episode: the last context reproduces the bonus.
     if CONTEXT_DIM:
         recovered = bonus_from_context(pending[-1][6], N_AGENTS, N_WINDOWS, N_LANDMARKS)
         assert abs(recovered - d_norm) < 1e-9, (
             f"terminal context gives {recovered}, bonus uses {d_norm}")
 
     bonus = BETA * d_norm
-    pending[-1][2] += bonus                                    # terminal only
+    pending[-1][2] += bonus
+
+    if args.terminal_at_limit:
+        pending[-1][4] = True
 
     for (o, a, r, o2, done, c, c2) in pending:
         replay_buffer.add(o, a, r, o2, done, c, c2)
 
-    # Shaped rewards, so the Q-vs-G health check compares like with like.
     step_rewards = [transition[2] for transition in pending]
 
     if (episode + 1) % args.null_every == 0:
@@ -435,7 +366,6 @@ for episode in range(NUM_EPISODES):
     temporal_metrics.reset()
     divergence_metrics.reset()
 
-    # PROGRESS
     if (episode + 1) % args.print_every == 0 or episode == 0:
         line = (f"Episode {episode + 1:6d}"
                 f" | Reward: {episode_reward:9.3f}"
@@ -459,7 +389,6 @@ for episode in range(NUM_EPISODES):
             line += f" | ETA {(NUM_EPISODES - episode - 1) / rate / 3600:5.2f}h"
         print(line, flush=True)
 
-    # CHECKPOINTS (fixed grid + best.pt on the UNSHAPED rolling mean)
     if (episode + 1) % args.checkpoint_every == 0:
         maddpg.save(os.path.join(CHECKPOINT_DIR, f"ckpt_ep{episode + 1}.pt"),
                     metadata=CHECKPOINT_METADATA)
@@ -472,10 +401,6 @@ for episode in range(NUM_EPISODES):
                               "best_episode": best_episode,
                               "best_avg_reward": best_reward})
 
-
-# =========================================================
-# SAVE
-# =========================================================
 
 print("-" * 64)
 print(f"Total environment steps : {global_step:,}")

@@ -1,11 +1,3 @@
-"""
-exp3_provenance.py
-
-Writes the header of an evaluation log: everything a reader needs
-to know WHICH code, WHICH checkpoints and WHICH environment
-produced the numbers that follow. Run once, then append the
-evaluation output to the same file.
-"""
 import hashlib, os, platform, subprocess, sys, time
 
 FILES = [

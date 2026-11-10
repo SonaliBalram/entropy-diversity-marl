@@ -2,7 +2,7 @@ import numpy as np, os
 R = "results/baseline/seed_42"
 rew = np.load(f"{R}/episode_rewards.npy")
 beh = np.load(f"{R}/behaviour_history.npz")
-n = len(rew); BI = 200          # burn-in: warmup used random actions
+n = len(rew); BI = 200
 
 def w(x, k=2000):
     m = (len(x)//k)*k

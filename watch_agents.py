@@ -1,40 +1,3 @@
-"""
-watch_agents.py
-
-Opens a window and shows the trained agents moving, so the
-numbers in the training log become something you can see.
-
-The three small circles are the agents. The three larger
-faded circles are the landmarks they are supposed to spread
-out and cover.
-
-WHAT TO LOOK FOR
-----------------
-  cos near  0  : agents pushing in unrelated directions.
-                 Usually they fan out and each takes a
-                 landmark. Good episodes look like this.
-
-  cos near +1  : all three agents driving the SAME way.
-                 They clump together, chase the same
-                 landmark, and leave two uncovered. These are
-                 the -80 to -120 reward episodes.
-
-  cos near -1  : agents driving directly against each other.
-
-`cos` is printed after each episode next to that episode's
-reward, so you can connect what you just watched to the
-number the log reports.
-
-USAGE
------
-    python watch_agents.py                       # latest checkpoint, stochastic
-    python watch_agents.py --deterministic       # no action sampling
-    python watch_agents.py --episodes 10 --delay 0.12
-    python watch_agents.py --checkpoint checkpoints/baseline/seed_42/final.pt
-
-Press Ctrl+C in the terminal to stop.
-"""
-
 import argparse
 import time
 
@@ -48,14 +11,7 @@ from instantaneous_metrics import InstantaneousBehaviourMetrics
 
 
 class RenderableEnvironment(MPEEnvironment):
-    """
-    Same environment and same custom team reward as training,
-    but with MPE's window turned on. Subclassed rather than
-    edited so the training run's environment.py is untouched.
-    """
-
     def __init__(self, n_agents=3, max_cycles=25, render_mode="human"):
-
         self.n_agents = n_agents
         self.max_cycles = max_cycles
 
@@ -83,7 +39,6 @@ class RenderableEnvironment(MPEEnvironment):
 
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--checkpoint", type=str,
@@ -123,12 +78,10 @@ def main():
     rewards = []
 
     for ep in range(args.episodes):
-
         observations = env.reset(seed=args.seed + ep)
         total = 0.0
 
         while True:
-
             actions = maddpg.act(
                 observations,
                 deterministic=args.deterministic
@@ -150,8 +103,6 @@ def main():
 
         cos = stats["cosine_mean"]
 
-        # A short verbal read so the number is interpretable
-        # without going back to the docstring.
         if cos > 0.5:
             verdict = "CLUMPED  <- homogenised, agents moved together"
         elif cos < -0.3:

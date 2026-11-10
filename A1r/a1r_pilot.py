@@ -1,60 +1,3 @@
-"""
-a1r_pilot.py
-
-Step 1 of Experiment A1r.  No training.  Runs BEFORE anything else and
-does three jobs:
-
-  1. THE KILL SWITCH.  Collects the ownership gap g and the landmark
-     margin m over a reference set of states drawn from the already-
-     trained A1 policies, and reports how much mass sits in each of the
-     four allocation quadrants.  If the combined gap G is near-constant
-     there is nothing for the gate to allocate and A1r should not be
-     run; fit_kappa() raises in that case rather than returning a
-     meaningless number.  The decision rule is fixed before looking:
-
-        - G near-constant, or the interdecile range below 0.05 reward
-          units                                  -> DO NOT RUN A1r
-        - fewer than 2% of samples in the "owns nothing" quadrant
-                                                  -> the agent-sited
-          diagram is inert here; fall back to mode="landmark"
-        - otherwise                               -> proceed as designed
-
-  2. FREEZES kappa AND log Z.  Both are estimated once, here, from this
-     reference set, written to results/a1r_pilot/a1r_constants.json, and
-     read unchanged by train_a1r.py.  They are never re-estimated during
-     training.  Training moves the state distribution, so an online Z
-     would make alpha_eff drift for reasons that have nothing to do with
-     the state, and the intervention would stop being "state-dependent
-     entropy" and become "state-dependent entropy whose scale moves
-     because the policy moved".
-
-     kappa is chosen so that alpha_eff spans exactly one decade between
-     the 10th and 90th percentiles of the reference gaps.
-
-  3. ESTABLISHES THE tau BASELINE.  Regresses A1's OWN measured
-     log sigma(o) on (1/2) log alpha_eff(o).  A1 trained at constant
-     alpha, so it had no reason to track the gate; whatever slope comes
-     out is background correlation between the sigma head and the
-     geometry, and A1r's tau must be read against it, not against zero.
-
-REFERENCE SET
--------------
-The A1 checkpoint ladder, not just best.pt.  The states A1r visits over
-50k episodes span early exploration as well as converged play, so a
-reference set drawn only from the converged policy would freeze Z
-against a distribution the arm spends most of training away from.
-Stochastic rollouts by default, because that is what training
-visitation looks like.
-
-    python a1r_pilot.py                       # defaults below
-    python a1r_pilot.py --layouts 50          # quicker dry run
-
-Outputs
-    results/a1r_pilot/a1r_constants.json      <- read by train_a1r.py
-    results/a1r_pilot/gaps.npz                <- raw m, g, sigma, return
-    results/a1r_pilot/report.txt
-"""
-
 import os
 import sys
 import json
@@ -64,42 +7,23 @@ import datetime
 import numpy as np
 import torch
 
-# --------------------------------------------------------------------
-# This file lives in A1r/.  The shared algorithm modules (environment.py,
-# maddpg_system.py, ...) live one level up, so the project folder has to
-# go on the import path BEFORE those imports run, and output directories
-# are anchored to it so results land in the SHARED results/ tree
-# whichever directory the script is launched from.
-# --------------------------------------------------------------------
 PROJECT_ROOT = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
 )
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from environment import MPEEnvironment          # noqa: E402
-from maddpg_system import MADDPGSystem          # noqa: E402  (A1 reference
-                                                # arm: read with the SHARED
-                                                # system it was trained on)
-from voronoi_gate import (                      # noqa: E402
+from environment import MPEEnvironment
+from maddpg_system import MADDPGSystem
+from voronoi_gate import (
     gaps, combined_gap, fit_kappa, fit_log_z, OwnershipGate, LN10,
 )
 
-# Pre-registered decision thresholds.  Fixed here, before the numbers
-# are looked at.
-MIN_INTERDECILE_G = 0.05      # reward units
-MIN_DISPOSSESSED  = 0.02      # fraction of samples with g >= 0
+MIN_INTERDECILE_G = 0.05
+MIN_DISPOSSESSED  = 0.02
 
 
 def collect(env, maddpg, layout_seeds, deterministic, torch_seed):
-    """
-    Roll out and keep the observations AT WHICH ACTIONS WERE TAKEN --
-    current observations, not next.  That is what lands in the replay
-    buffer and what the actor update sees, so it is the distribution
-    the gate must be frozen against.
-
-    Also keeps the per-observation policy sigma, for the tau baseline.
-    """
     torch.manual_seed(torch_seed)
     obs_all, sig_all, rets = [], [], []
 
@@ -113,8 +37,6 @@ def collect(env, maddpg, layout_seeds, deterministic, torch_seed):
                 dist = maddpg.actor.get_distribution(
                     torch.as_tensor(observations, dtype=torch.float32)
                 )
-                # one scalar sigma per agent: the geometric mean over
-                # action dims, which is what (1/2) log alpha_eff sets
                 sig_all.append(
                     dist.scale.log().mean(-1).exp().cpu().numpy()
                 )
@@ -126,13 +48,12 @@ def collect(env, maddpg, layout_seeds, deterministic, torch_seed):
                 break
         rets.append(total)
 
-    return (np.concatenate(obs_all, axis=0),        # [n_samples, obs_dim]
-            np.concatenate(sig_all, axis=0),        # [n_samples]
+    return (np.concatenate(obs_all, axis=0),
+            np.concatenate(sig_all, axis=0),
             np.asarray(rets))
 
 
 def ols(x, y):
-    """Slope, intercept and r of a simple least-squares fit."""
     x = np.asarray(x, dtype=np.float64)
     y = np.asarray(y, dtype=np.float64)
     xc, yc = x - x.mean(), y - y.mean()
@@ -191,9 +112,6 @@ def main():
         f"{'deterministic' if args.deterministic else 'stochastic'}")
     say("")
 
-    # -----------------------------------------------------------------
-    # 1. COLLECT THE REFERENCE STATES
-    # -----------------------------------------------------------------
     obs_parts, sig_parts, ret_parts, tag_parts = [], [], [], []
 
     for seed in args.seeds:
@@ -243,9 +161,6 @@ def main():
     say("")
     say(f"reference set: {obs.shape[0]} (state, agent) samples")
 
-    # -----------------------------------------------------------------
-    # 2. THE TWO GAPS
-    # -----------------------------------------------------------------
     m_t, g_t = gaps(torch.as_tensor(obs))
     m = m_t.numpy()
     g = g_t.numpy()
@@ -270,9 +185,6 @@ def main():
     say("")
     say(f"interdecile range of G: {inter_g:.4f} reward units")
 
-    # -----------------------------------------------------------------
-    # 3. FREEZE kappa AND log Z
-    # -----------------------------------------------------------------
     say("")
     say("-" * 72)
     say("FROZEN CONSTANTS")
@@ -301,7 +213,6 @@ def main():
         f"spread {d['interdecile_log_alpha'] / LN10:.4f} decades")
     say(f"           clamped {100 * d['frac_clamped']:.2f}% of samples")
 
-    # predicted sigma field, pinned to A1's own measured sigma
     sig_a1 = float(sig.mean())
     s_lo = sig_a1 * np.sqrt(d["alpha_eff_q10"] / args.alpha)
     s_hi = sig_a1 * np.sqrt(d["alpha_eff_q90"] / args.alpha)
@@ -315,9 +226,6 @@ def main():
     say(f"R4 (clamps respected): "
         f"{'PASS' if 0.0067 < s_min and s_max < 7.3891 else 'FAIL'}")
 
-    # -----------------------------------------------------------------
-    # 4. THE FOUR QUADRANTS
-    # -----------------------------------------------------------------
     say("")
     say("-" * 72)
     say("ALLOCATION QUADRANTS   (boundary band = one kappa)")
@@ -384,9 +292,6 @@ def main():
         f"   contested {mean_w(contested):.4f}"
         f"   secure owner {mean_w(secure):.4f}")
 
-    # -----------------------------------------------------------------
-    # 4b. WHAT FREEZING Z COSTS
-    # -----------------------------------------------------------------
     say("")
     say("-" * 72)
     say("COST OF FREEZING Z   (realised geometric mean of alpha_eff)")
@@ -420,9 +325,6 @@ def main():
     say("  If 'spread' collapses towards 0 the allocation has flattened and")
     say("  A1r has quietly become A1.")
 
-    # -----------------------------------------------------------------
-    # 5. tau BASELINE
-    # -----------------------------------------------------------------
     say("")
     say("-" * 72)
     say("tau BASELINE  (A1's own sigma head, against the frozen gate)")
@@ -451,7 +353,6 @@ def main():
     say("  0 < tau < 1 -> the only regime in which A1r can move "
         "anything.")
 
-    # per-rung, to see whether tracking capacity changes over training
     say("")
     say(f"  {'rung':>8}{'slope':>10}{'r':>9}{'mean sigma':>13}")
     for ep in sorted(set(rung.tolist())):
@@ -459,9 +360,6 @@ def main():
         sl, _, rr = ols(half_log_a[sel], np.log(sig[sel]))
         say(f"  {ep:>8}{sl:+10.4f}{rr:+9.4f}{sig[sel].mean():13.4f}")
 
-    # -----------------------------------------------------------------
-    # 6. VERDICT
-    # -----------------------------------------------------------------
     say("")
     say("=" * 72)
     say("KILL-SWITCH VERDICT  (rules fixed before the numbers were seen)")
@@ -492,9 +390,6 @@ def main():
     for r_ in reasons:
         say(f"    - {r_}")
 
-    # -----------------------------------------------------------------
-    # 7. WRITE
-    # -----------------------------------------------------------------
     const = dict(
         gate.to_dict(),
         decades=args.decades,

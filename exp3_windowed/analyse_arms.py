@@ -1,47 +1,3 @@
-"""
-analyse_arms.py  --  the pre-registered comparison for the windowed Exp 3 arms.
-
-Run from baseline_fixed/ in your .venv, e.g.
-
-    # validation today: old A2 vs baseline (must reproduce the published old-D result)
-    python exp3_windowed/analyse_arms.py --control baseline:checkpoints/baseline \
-                                         --treatment A2old:checkpoints/beta_3
-
-    # the real primary result, once new A2 has trained
-    python exp3_windowed/analyse_arms.py --control baseline:checkpoints/baseline \
-                                         --treatment A2w:checkpoints/beta_3_w5
-
-    # A2c vs new A2
-    python exp3_windowed/analyse_arms.py --control A2w:checkpoints/beta_3_w5 \
-                                         --treatment A2cw:checkpoints/beta_3_w5_augcritic
-
-Rollouts reuse block4_checks.py (same environment, loading, deterministic
-actions, tokenise, 200 held-out layouts) and its token cache, so anything
-already evaluated -- e.g. the baseline -- is not rolled out again.
-
-PRE-REGISTERED RULES (fixed 29 Sept 2026, before any windowed A2 result)
-------------------------------------------------------------------------
-PRIMARY  matched-return Delta D on the WINDOWED measure.
-         Per seed: control best.pt gives (r0, D0). Among the treatment's
-         checkpoints on the ASCENDING branch (episode <= the episode of that
-         run's highest held-out return), take the one whose held-out return
-         is closest to r0. Delta D = D_treatment - D0. Chosen on RETURN ALONE.
-         Match tolerance 1.0 reward units; a seed outside it stays in the
-         mean and is flagged (dropping it after seeing its number is worse).
-SECONDARY the same with no branch restriction, and the same on the OLD D.
-CREDITED  an induced-diversity effect is claimed ONLY if the primary
-         mean Delta D exceeds the windowed detection floor (0.041 bits) AND
-         t(3) >= 3.18 (two-sided 5%, df = 3). Anything else is reported as
-         not distinguishable from zero.
-CHECKS   competence cost (best.pt return, paired); gaming (training-time
-         sigma from episode 2,000 on -- the checkpoint ladder's range -- must
-         stay under 0.02; the alpha = 0 floor is 0.0067).
-         CORRECTION 29 Sept 2026, made on the OLD A2 validation run, before any
-         windowed A2 result existed: the first version took the max over the
-         whole run, which includes the initial sigma ~1 of an untrained network
-         and trips in every arm. Restricted to episode 2,000 onwards.
-"""
-
 import os
 import sys
 import argparse
@@ -53,7 +9,7 @@ PROJECT_ROOT = os.path.dirname(HERE)
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, HERE)
 
-import block4_checks as b4                         # noqa: E402
+import block4_checks as b4
 
 FLOOR_WINDOWED = 0.041
 FLOOR_OLD = 0.0566
@@ -61,15 +17,10 @@ ZERO_WINDOWED = 0.207
 T_CRIT = 3.18
 MATCH_TOL = 1.0
 SIGMA_TRIPWIRE = 0.02
-SIGMA_FROM_EPISODE = 2000       # same range as the checkpoint ladder
+SIGMA_FROM_EPISODE = 2000
 
-
-# =========================================================
-# EVALUATION
-# =========================================================
 
 def best_episode(path):
-    """Episode at which best.pt was saved (from its metadata), or None."""
     import torch
     ck = torch.load(path, map_location="cpu", weights_only=False)
     ep = ck.get("best_episode")
@@ -96,17 +47,7 @@ def evaluate_arm(label, root, seeds, layout_seeds, cache_dir):
     return arm
 
 
-# =========================================================
-# THE STATISTIC  (pure function: tested on its own)
-# =========================================================
-
 def match(control_best, treatment, branch, key, tol=MATCH_TOL):
-    """
-    control_best: dict with ret and key.  treatment: dict(ladder=[...], best={...}).
-    branch 'ascending' keeps candidates at or before the episode of the ladder's
-    highest held-out return; 'any' keeps all. best.pt is a candidate if its
-    episode qualifies. Returns (matched point, return gap, Delta D).
-    """
     lad = treatment["ladder"]
     peak_ep = max(lad, key=lambda p: p["ret"])["episode"]
     cands = lad + [treatment["best"]]
@@ -140,10 +81,6 @@ def report(C, T, seeds, branch, key, clabel, tlabel, floor=None):
     print(line)
     return mean, sd, t, dd
 
-
-# =========================================================
-# MAIN
-# =========================================================
 
 def main():
     ap = argparse.ArgumentParser()
@@ -201,10 +138,6 @@ def main():
         if not (os.path.exists(f) and os.path.exists(fs)):
             missing.append(s)
             continue
-        # Same range as the checkpoint ladder: from episode 2,000 on. The first
-        # updates come from a freshly initialised network whose sigma starts near 1
-        # and collapses to the 0.0067 floor within a few hundred episodes; that
-        # transient happens in every arm and is not gaming.
         sig, steps = np.load(f), np.load(fs)
         settled = sig[steps > SIGMA_FROM_EPISODE * 25]
         mx = float(np.max(settled))
